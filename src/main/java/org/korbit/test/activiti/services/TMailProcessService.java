@@ -8,11 +8,12 @@ import org.activiti.engine.TaskService;
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
+import org.korbit.test.activiti.domain.GroupPermission;
 import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.exceptions.TaskNotFoundException;
 import org.korbit.test.activiti.models.ActionType;
 import org.korbit.test.activiti.repository.GroupPermissionRepository;
-import org.korbit.test.activity.dto.*;
+import org.korbit.test.activiti.dto.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -99,7 +100,10 @@ public class TMailProcessService {
     @Transactional
     public List<ActionType> getAvailableActions(@NotNull String taskId, @NotNull String username) {
         List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
-        return groups.stream().map(group ->  groupPermissionRepository.findGroupPermissionByGroupId(group.getId()))
-                .flatMap(groupPermission ->  groupPermission.getActionTypes().stream()).distinct().collect(Collectors.toList());
+        return groups.stream()
+                .map(Group::getId)
+                .map(groupPermissionRepository::findGroupPermissionByGroupId)
+                .flatMap(groupPermission -> groupPermission.orElse(new GroupPermission()).getActionTypes().stream())
+                .distinct().collect(Collectors.toList());
     }
 }

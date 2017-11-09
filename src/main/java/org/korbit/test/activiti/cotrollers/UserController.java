@@ -2,7 +2,7 @@ package org.korbit.test.activiti.cotrollers;
 
 import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.models.ActionType;
-import org.korbit.test.activity.dto.*;
+import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.services.TMailProcessService;
 import org.springframework.web.bind.annotation.*;
 

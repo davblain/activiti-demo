@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.korbit.test.activiti.models.ActionType;
 
 import javax.persistence.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,8 +20,8 @@ public class GroupPermission {
     @Column(unique = true)
     String groupId;
     @ElementCollection(fetch = FetchType.EAGER)
-    List<ActionType> actionTypes;
-    GroupPermission() {
+    List<ActionType> actionTypes = new ArrayList<>();
+    public GroupPermission() {
 
     }
 
