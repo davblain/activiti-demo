@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:activiti="http://activiti.org/bpmn"
+        targetNamespace="Examples">
+
+    <process id="oneTaskProcess" name="The One Task Process">
+        <startEvent id="theStart" />
+        <sequenceFlow id="flow2" sourceRef="theStart" targetRef="theTask2" />
+        <serviceTask id ="theTask2" name=" Test task" activiti:class="org.korbit.test.activity.services.FirstProcess.TestService2"/>
+        <sequenceFlow id = "flow3" sourceRef="theTask2" targetRef="theTask3"  />
+        <serviceTask id="theTask3" name="Test service Task" activiti:class="org.korbit.test.activity.services.FirstProcess.TestService">
+        </serviceTask>
+
+        <sequenceFlow sourceRef="theTask3" targetRef="theTask"/>
+        <userTask id="theTask" >
+
+        </userTask>
+        <sequenceFlow sourceRef="theTask" targetRef="theEnd"/>
+        <endEvent id="theEnd" />
+    </process>
+
+</definitions>

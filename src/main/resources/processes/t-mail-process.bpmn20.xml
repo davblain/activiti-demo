@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<definitions id="definitions"
+             targetNamespace="http://activiti.org/bpmn20"
+             xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:activiti="http://activiti.org/bpmn">
+    <process id="tMailProcess" name="tMailProcess">
+        <startEvent id="theStart" activiti:initiator="initiator">
+        </startEvent>
+        <boundaryEvent id="boundarytimer" attachedToRef="userTask" cancelActivity="true">
+            <timerEventDefinition>
+                <timeDuration>P2D</timeDuration>
+            </timerEventDefinition>
+        </boundaryEvent>
+        <sequenceFlow sourceRef="theStart" targetRef="userTask"/>
+        <userTask id="userTask" activiti:assignee="${assignee}">
+            <extensionElements>
+                <activiti:taskListener event="complete" class="org.korbit.test.activiti.listeners.CompleteListener"/>
+            </extensionElements>
+        </userTask>
+        <sequenceFlow sourceRef="boundarytimer" targetRef="expiredService"/>
+        <sequenceFlow sourceRef="userTask" targetRef="actionGw"/>
+        <exclusiveGateway id="actionGw" name="Gateway for action"/>
+        <sequenceFlow sourceRef="actionGw" targetRef="delegateService">
+            <conditionExpression xsi:type="tFormalExpression">${state == "Delegate"}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="actionGw" targetRef="refinementService">
+            <conditionExpression xsi:type="tFormalExpression">${state == "Refinement"} </conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="actionGw" targetRef="cancelService">
+            <conditionExpression xsi:type="tFormalExpression">${state == "Cancel"}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow sourceRef="actionGw" targetRef="doneService">
+            <conditionExpression xsi:type="tFormalExpression">${state == "Done"}</conditionExpression>
+        </sequenceFlow>
+        <serviceTask id="expiredService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ExpiredServiceTask"/>
+        <serviceTask id="doneService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DoneServiceTask"/>
+        <serviceTask id="delegateService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DelegateServiceTask">
+        </serviceTask>
+        <serviceTask id="cancelService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CancelServiceTask"/>
+        <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask"/>
+        <sequenceFlow sourceRef="delegateService" targetRef="userTask"/>
+        <sequenceFlow sourceRef="cancelService" targetRef="theEnd"/>
+        <sequenceFlow sourceRef="expiredService" targetRef="theEnd"/>
+        <sequenceFlow sourceRef="refinementService" targetRef="userTask"/>
+        <endEvent id="theEnd"/>
+    </process>
+</definitions>
