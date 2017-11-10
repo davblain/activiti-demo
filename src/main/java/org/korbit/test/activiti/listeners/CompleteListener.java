@@ -20,9 +20,9 @@ public class CompleteListener implements TaskListener {
         userChain.add(delegateTask.getAssignee());
         delegateTask.getExecution().setVariable("userChain",userChain);
         ArrayList<ActionDto> actions = (ArrayList<ActionDto>)delegateTask.getExecution().getVariable("actions");
-        ActionDto lastAction = delegateTask.getExecution().getVariable("lastAction",ActionDto.class);
-        actions.add(lastAction);
-        delegateTask.getExecution().setVariable("state",lastAction.getType().toString() );
+        //ActionDto lastAction = delegateTask.getExecution().getVariable("lastAction",ActionDto.class);
+       // actions.add(lastAction);
+        //delegateTask.getExecution().setVariable("state",lastAction.getType().toString() );
 
     }
 }

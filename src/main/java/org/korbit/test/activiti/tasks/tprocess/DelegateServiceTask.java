@@ -11,8 +11,8 @@ public class DelegateServiceTask implements JavaDelegate {
     Expression assignee;
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-      ActionDto action = delegateExecution.getVariable("lastAction",ActionDto.class);
-      delegateExecution.setVariable("assignee",action.getData().get("recipient"));
+      ActionDto action = delegateExecution.getVariable("action",ActionDto.class);
+      delegateExecution.setVariable("assigner",action.getData().get("recipient"));
       action.setTime(LocalTime.now());
     }
 }

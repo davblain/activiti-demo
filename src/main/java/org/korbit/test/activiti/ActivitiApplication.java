@@ -39,7 +39,7 @@ public class ActivitiApplication {
 				identityService.saveGroup(group2);
 
 				GroupPermission groupPermission = new GroupPermission();
-				groupPermission.setActionTypes(Arrays.asList(ActionType.Close,ActionType.Cancel,ActionType.Done,
+				groupPermission.setActionTypesIfAssigner(Arrays.asList(ActionType.Close,ActionType.Cancel,ActionType.Done,
 						ActionType.Delegate,ActionType.ReOpen,ActionType.Refinement));
 				groupPermission.setGroupId(identityService.createGroupQuery().groupName("users").singleResult().getId());
 				groupPermissionRepository.save(groupPermission);

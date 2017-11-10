@@ -13,35 +13,49 @@
             </timerEventDefinition>
         </boundaryEvent>
         <sequenceFlow sourceRef="theStart" targetRef="userTask"/>
-        <userTask id="userTask" activiti:assignee="${assignee}">
+        <userTask id="userTask" activiti:assignee="${assigner}">
             <extensionElements>
                 <activiti:taskListener event="complete" class="org.korbit.test.activiti.listeners.CompleteListener"/>
             </extensionElements>
         </userTask>
         <sequenceFlow sourceRef="boundarytimer" targetRef="expiredService"/>
-        <sequenceFlow sourceRef="userTask" targetRef="actionGw"/>
-        <exclusiveGateway id="actionGw" name="Gateway for action"/>
+        <sequenceFlow sourceRef="userTask" targetRef="validateService"/>
+        <sequenceFlow sourceRef="validateService" targetRef="actionGw"/>
+        <exclusiveGateway id="actionGw" name="Gateway for action by Performers"/>
         <sequenceFlow sourceRef="actionGw" targetRef="delegateService">
             <conditionExpression xsi:type="tFormalExpression">${state == "Delegate"}</conditionExpression>
         </sequenceFlow>
         <sequenceFlow sourceRef="actionGw" targetRef="refinementService">
             <conditionExpression xsi:type="tFormalExpression">${state == "Refinement"} </conditionExpression>
         </sequenceFlow>
-        <sequenceFlow sourceRef="actionGw" targetRef="cancelService">
-            <conditionExpression xsi:type="tFormalExpression">${state == "Cancel"}</conditionExpression>
+        <sequenceFlow sourceRef="actionGw" targetRef="closeService">
+            <conditionExpression xsi:type="tFormalExpression">${state == "Close"}</conditionExpression>
+        </sequenceFlow>
+
+        <sequenceFlow sourceRef="actionGw" targetRef="reopenService">
+            <conditionExpression xsi:type="tFormalExpression">${state = "Reopen"</conditionExpression>
         </sequenceFlow>
         <sequenceFlow sourceRef="actionGw" targetRef="doneService">
             <conditionExpression xsi:type="tFormalExpression">${state == "Done"}</conditionExpression>
         </sequenceFlow>
+        <sequenceFlow sourceRef="actionGw" targetRef="cancelService">
+            <conditionExpression xsi:type="tFormalExpression">${state == "Cancel"}</conditionExpression>
+        </sequenceFlow>
+        <serviceTask id="validateService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ValidateActionServiceTask"/>
+        <serviceTask id="reopenService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ReOpenServiceTask"/>
+        <serviceTask id="closeService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CloseServiceTask"/>
         <serviceTask id="expiredService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ExpiredServiceTask"/>
         <serviceTask id="doneService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DoneServiceTask"/>
         <serviceTask id="delegateService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DelegateServiceTask">
         </serviceTask>
         <serviceTask id="cancelService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CancelServiceTask"/>
         <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask"/>
+        <sequenceFlow sourceRef="reopenService" targetRef="userTask"/>
+        <sequenceFlow sourceRef="doneService" targetRef="theEnd"/>
         <sequenceFlow sourceRef="delegateService" targetRef="userTask"/>
-        <sequenceFlow sourceRef="cancelService" targetRef="theEnd"/>
+        <sequenceFlow sourceRef="cancelService" targetRef="userTask"/>
         <sequenceFlow sourceRef="expiredService" targetRef="theEnd"/>
+        <sequenceFlow sourceRef="doneService" targetRef="theEnd"/>
         <sequenceFlow sourceRef="refinementService" targetRef="userTask"/>
         <endEvent id="theEnd"/>
     </process>

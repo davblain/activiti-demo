@@ -20,7 +20,9 @@ public class GroupPermission {
     @Column(unique = true)
     String groupId;
     @ElementCollection(fetch = FetchType.EAGER)
-    List<ActionType> actionTypes = new ArrayList<>();
+    List<ActionType> actionTypesIfNotAssigner = new ArrayList<>();
+    @ElementCollection
+    List<ActionType> actionTypesIfAssigner = new ArrayList<>();
     public GroupPermission() {
 
     }

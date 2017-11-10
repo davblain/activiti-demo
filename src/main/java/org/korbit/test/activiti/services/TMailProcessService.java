@@ -1,10 +1,9 @@
 package org.korbit.test.activiti.services;
 
 
-import org.activiti.engine.IdentityService;
-import org.activiti.engine.RepositoryService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.engine.*;
+import org.activiti.engine.history.HistoricActivityInstance;
+import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.identity.Group;
 import org.activiti.engine.runtime.ProcessInstance;
 import org.activiti.engine.task.Task;
@@ -28,22 +27,23 @@ public class TMailProcessService {
     final private TaskService taskService;
     final private RepositoryService repositoryService;
     final private GroupPermissionRepository groupPermissionRepository;
+    final private HistoryService historyService;
 
-
-    public TMailProcessService(RuntimeService runtimeService,IdentityService identityService,
-                               TaskService taskService,RepositoryService repositoryService,GroupPermissionRepository groupPermissionRepository) {
+    public TMailProcessService(RuntimeService runtimeService, IdentityService identityService,
+                               TaskService taskService, RepositoryService repositoryService, GroupPermissionRepository groupPermissionRepository, HistoryService historyService) {
         this.runtimeService = runtimeService;
         this.identityService = identityService;
         this.taskService = taskService;
         this.repositoryService = repositoryService;
         this.groupPermissionRepository = groupPermissionRepository;
+        this.historyService = historyService;
     }
     @Transactional
     public String startTask(@NotNull TaskMailRequest task) {
         try {
             identityService.setAuthenticatedUserId(task.getCreator());
             Map<String,Object> variables = new HashMap<>();
-            variables.put("assignee",task.getRecipient());
+            variables.put("assigner",task.getRecipient());
             variables.put("duration",10);
             variables.put("description", task.getDescription());
             ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("tMailProcess",variables);
@@ -52,7 +52,7 @@ public class TMailProcessService {
             identityService.setAuthenticatedUserId(null);
         }
     }
-    public List<TaskItemDto> getListOfTaskByUsername(@NotNull String username) {
+    public List<TaskItemDto> getListOfCurrentTaskByUsername(@NotNull String username) {
         return  taskService.createTaskQuery().taskAssignee(username).includeProcessVariables().list().stream().map( task -> {
             TaskItemDto t = new TaskItemDto();
             System.out.println(task.getProcessVariables().get("initiator").toString());
@@ -62,11 +62,23 @@ public class TMailProcessService {
             return  t;
         }).collect(Collectors.toList());
     }
+    public List<TaskItemDto> getDoneWithUserTasks(@NotNull String username) {
+        return  historyService.createHistoricProcessInstanceQuery().involvedUser(username).includeProcessVariables().finished().list().stream()
+                .map( p -> {
+                    TaskItemDto t = new TaskItemDto();
+                    System.out.println(p.getProcessVariables().get("initiator").toString());
+                    t.setCreator((String)(p.getProcessVariables().get("initiator")));
+                    t.setDescription((String)(p.getProcessVariables().get("description")));
+                    t.setId(p.getSuperProcessInstanceId());
+                    return  t;
+                } ).collect(Collectors.toList());
+    }
+
     public void doAction(@NotNull StepRequest stepRequest) {
         Task task = Optional.ofNullable(taskService.createTaskQuery().processInstanceId(stepRequest.getTaskId()).includeProcessVariables().singleResult())
                 .orElseThrow(() -> new TaskNotFoundException(stepRequest.getTaskId()));
         Map<String, Object> taskVariables = new HashMap<String, Object>();
-        taskVariables.put("lastAction",stepRequest.getAction());
+        taskVariables.put("actionToValidate",stepRequest.getAction());
         taskService.complete(task.getId(),taskVariables);
     }
     public List<ActionDto> getListOfActions(@NotNull String taskId) {
@@ -100,10 +112,24 @@ public class TMailProcessService {
     @Transactional
     public List<ActionType> getAvailableActions(@NotNull String taskId, @NotNull String username) {
         List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
+        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).includeProcessVariables().involvedUser(username).singleResult();
+        if (historicProcessInstance == null) {
+            return new ArrayList<ActionType>();
+        }
+        List<ActionType> unAvailableActions = Optional.ofNullable((List<ActionType>) historicProcessInstance.getProcessVariables().get("unAvailableActions")).orElse(new ArrayList<>());
         return groups.stream()
                 .map(Group::getId)
                 .map(groupPermissionRepository::findGroupPermissionByGroupId)
-                .flatMap(groupPermission -> groupPermission.orElse(new GroupPermission()).getActionTypes().stream())
+                .flatMap((groupPermission) -> {
+                    ArrayList<ActionType>  list = new ArrayList<>();
+                    GroupPermission permission = groupPermission.orElse(new GroupPermission());
+                    if ( username.equals(historicProcessInstance.getProcessVariables().get("assigner"))) {
+                        list.addAll(permission.getActionTypesIfAssigner());
+                    }
+                    list.addAll(permission.getActionTypesIfNotAssigner());
+                    return list.stream();
+        })
+                .filter( actionType ->  !unAvailableActions.contains(actionType))
                 .distinct().collect(Collectors.toList());
     }
 }

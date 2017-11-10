@@ -2,7 +2,6 @@ package org.korbit.test.activiti.cotrollers;
 
 import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.models.ActionType;
-import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.services.TMailProcessService;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,7 +21,7 @@ public class UserController {
     }
     @GetMapping("users/{username}/tasks")
     List<TaskItemDto> getListOfTasks(@PathVariable  String username){
-      return tMailProcessService.getListOfTaskByUsername(username);
+      return tMailProcessService.getListOfCurrentTaskByUsername(username);
     }
 
     @PostMapping("dostep")
