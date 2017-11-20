@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.validation.constraints.NotNull;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,34 +45,87 @@ public class TMailProcessService {
             identityService.setAuthenticatedUserId(task.getCreator());
             Map<String,Object> variables = new HashMap<>();
             variables.put("assigner",task.getRecipient());
+            ArrayList<ActionDto> actionDtos = new ArrayList<>();
+            ActionDto action =  new ActionDto();
+            action.setCreator(task.getCreator());
+            action.setType(ActionType.Create);
+            action.setData(new HashMap<>());
+            action.getData().put("recipient",task.getRecipient());
+            actionDtos.add(action);
+            variables.put("actions",actionDtos);
+            variables.put("state","open");
             variables.put("duration",10);
             variables.put("description", task.getDescription());
+            variables.put("title",task.getTitle());
             ProcessInstance processInstance = runtimeService.startProcessInstanceByKey("tMailProcess",variables);
             return processInstance.getId();
         } finally {
             identityService.setAuthenticatedUserId(null);
         }
     }
-    public List<TaskItemDto> getListOfCurrentTaskByUsername(@NotNull String username) {
-        return  taskService.createTaskQuery().taskAssignee(username).includeProcessVariables().list().stream().map( task -> {
-            TaskItemDto t = new TaskItemDto();
-            System.out.println(task.getProcessVariables().get("initiator").toString());
-            t.setCreator((String)(task.getProcessVariables().get("initiator")));
-            t.setDescription((String)(task.getProcessVariables().get("description")));
-            t.setId(task.getProcessInstanceId());
-            return  t;
-        }).collect(Collectors.toList());
+
+    private ActionDto getLastDelegateToUser(@NotNull String taskId,@NotNull String username) {
+       List<ActionDto> actionsList = getListOfActions(taskId).stream().filter(actionDto -> actionDto.getType().equals(ActionType.Delegate) || actionDto.getType().equals(ActionType.Refinement)||actionDto.getType().equals(ActionType.Create)).filter(actionDto -> actionDto.getData().get("recipient").equals(username)).collect(Collectors.toList());
+       if (actionsList.size()==0) return null;
+       return actionsList.get(actionsList.size()-1);
     }
-    public List<TaskItemDto> getDoneWithUserTasks(@NotNull String username) {
-        return  historyService.createHistoricProcessInstanceQuery().involvedUser(username).includeProcessVariables().finished().list().stream()
-                .map( p -> {
-                    TaskItemDto t = new TaskItemDto();
-                    System.out.println(p.getProcessVariables().get("initiator").toString());
-                    t.setCreator((String)(p.getProcessVariables().get("initiator")));
-                    t.setDescription((String)(p.getProcessVariables().get("description")));
-                    t.setId(p.getSuperProcessInstanceId());
-                    return  t;
-                } ).collect(Collectors.toList());
+
+    public Page<TaskItemDto> getListOfCurrentTaskByUsername(@NotNull String username,Integer page ,Integer limit) {
+        Page<TaskItemDto> pagee = new Page<>();
+        taskService.createTaskQuery().taskAssignee(username).listPage((page-1),limit).stream().map( task -> {
+             HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(task.getProcessInstanceId()).includeProcessVariables().singleResult();
+             return taskToTaskItemDto(historicProcessInstance,username);
+        }).forEach(taskItemDto ->  pagee.getContent().add(taskItemDto));
+        pagee.setTotalElements(taskService.createTaskQuery().taskAssignee(username).count());
+        pagee.setTotalPages(pagee.getTotalElements()/limit+1);
+        pagee.setNumber(page);
+        return  pagee;
+    }
+    public Page<TaskItemDto> getDoneWithUserTasks(@NotNull String username,Integer page, Integer limit) {
+        Page<TaskItemDto> pagee = new Page<>();
+        historyService.createHistoricProcessInstanceQuery().involvedUser(username).includeProcessVariables().finished().listPage((page-1),limit).stream()
+                .map( p -> taskToTaskItemDto(p,username)).forEach(taskItemDto -> pagee.getContent().add(taskItemDto) );
+        pagee.setNumber(page);
+        pagee.setTotalElements(historyService.createHistoricProcessInstanceQuery().involvedUser(username).finished().count());
+        pagee.setTotalPages(pagee.getTotalElements()/limit+1);
+        return pagee;
+    }
+     private TaskItemDto taskToTaskItemDto(HistoricProcessInstance task,String username) {
+
+        TaskItemDto t = new TaskItemDto();
+        t.setCreator((String)(task.getProcessVariables().get("initiator")));
+        t.setStatus(task.getProcessVariables().get("state").toString());
+        t.setCreated(task.getStartTime());
+         t.setDescription((String) (task.getProcessVariables().get("description")));
+         t.setId(task.getId());
+         t.setTitle((String) task.getProcessVariables().get("title"));
+        Optional.ofNullable(getLastDelegateToUser(task.getId(),username)).ifPresent(lastAction -> {
+            t.setReceived(lastAction.getTime());
+            t.setSender(lastAction.getCreator());
+        });
+        return t;
+    }
+    public Page<TaskItemDto> getAllTasksOfUser(@NotNull String username, Integer page ,Integer limit)  {
+
+        Page<TaskItemDto> pagee = new Page<>();
+         List<TaskItemDto> content = historyService.createHistoricProcessInstanceQuery().involvedUser(username).includeProcessVariables().listPage((page-1)*limit,limit).stream()
+                .map(p -> taskToTaskItemDto(p,username)).collect(Collectors.toList());
+        pagee.setContent(content);
+        pagee.setNumber(page);
+        pagee.setTotalElements(historyService.createHistoricProcessInstanceQuery().involvedUser(username).count());
+        pagee.setTotalPages(pagee.getTotalElements()/limit+1);
+        return pagee;
+    }
+
+    public Page <TaskItemDto> getClosedTasksOfUser(@NotNull String username,Integer page ,Integer limit) {
+        Page<TaskItemDto> pagee = new Page<>();
+        historyService.createHistoricProcessInstanceQuery().involvedUser(username).variableValueEquals("state","closed").includeProcessVariables().listPage((page-1)*limit,limit).stream()
+                .map( task ->  taskToTaskItemDto(task,username))
+                .forEach(taskItemDto ->pagee.getContent().add(taskItemDto));
+        pagee.setNumber(page);
+        pagee.setTotalElements(historyService.createHistoricProcessInstanceQuery().involvedUser(username).variableValueEquals("state","closed").count());
+        pagee.setTotalPages(pagee.getTotalElements()/limit+1);
+        return  pagee;
     }
 
     public void doAction(@NotNull StepRequest stepRequest) {
@@ -82,9 +136,9 @@ public class TMailProcessService {
         taskService.complete(task.getId(),taskVariables);
     }
     public List<ActionDto> getListOfActions(@NotNull String taskId) {
-        Task task = Optional.ofNullable(taskService.createTaskQuery().processInstanceId(taskId).includeProcessVariables().singleResult())
-                .orElseThrow(() -> new TaskNotFoundException(taskId));
-        return Optional.ofNullable((ArrayList<ActionDto>) task.getProcessVariables().get("actions")).orElse(new ArrayList<>());
+        HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).includeProcessVariables().singleResult()).orElseThrow(() -> new TaskNotFoundException(taskId));
+
+        return Optional.ofNullable((ArrayList<ActionDto>) historicProcessInstance.getProcessVariables().get("actions")).orElse(new ArrayList<>());
 
     }
 
@@ -99,13 +153,17 @@ public class TMailProcessService {
                 .orElse(new ArrayList<String>());
     }
     public TaskDto getTaskDetails(@NotNull String taskId) {
-        Task task = taskService.createTaskQuery().processInstanceId(taskId).includeProcessVariables().singleResult();
+        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).includeProcessVariables().singleResult();
         TaskDto taskDto = new TaskDto();
-        taskDto.setUserChain((List<String>)Optional.ofNullable(task.getProcessVariables().get("userChain")).orElse(new ArrayList<>()));
-        taskDto.setAssignee(task.getAssignee());
-        taskDto.setActions((ArrayList<ActionDto>) Optional.ofNullable(task.getProcessVariables().get("actions")).orElse(new ArrayList<>()));
-        taskDto.setCreator((String) task.getProcessVariables().get("initiator"));
-        taskDto.setState((String) task.getProcessVariables().get("state"));
+        taskDto.setUserChain((List<String>)Optional.ofNullable(historicProcessInstance .getProcessVariables().get("userChain")).orElse(new ArrayList<>()));
+        taskDto.setAssignee((String)historicProcessInstance .getProcessVariables().get("assigner"));
+        taskDto.setActions((ArrayList<ActionDto>) Optional.ofNullable(historicProcessInstance .getProcessVariables().get("actions")).orElse(new ArrayList<>()));
+        taskDto.setCreator((String) historicProcessInstance.getProcessVariables().get("initiator"));
+        taskDto.setTitle((String) historicProcessInstance.getProcessVariables().get("title"));
+        taskDto.setState((String) historicProcessInstance.getProcessVariables().get("state"));
+        taskDto.setStartTime(historicProcessInstance.getStartTime());
+        taskDto.setEndTime(historicProcessInstance.getEndTime());
+        taskDto.setDescription((String) historicProcessInstance.getProcessVariables().get("description"));
         return taskDto;
     }
 

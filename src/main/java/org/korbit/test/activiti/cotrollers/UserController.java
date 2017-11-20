@@ -3,27 +3,46 @@ package org.korbit.test.activiti.cotrollers;
 import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.models.ActionType;
 import org.korbit.test.activiti.services.TMailProcessService;
+import org.korbit.test.activiti.services.UserService;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
+@RequestMapping("api")
 public class UserController {
     final private TMailProcessService tMailProcessService;
-    UserController(TMailProcessService tMailProcessService) {
+    final private UserService userService;
+    UserController(TMailProcessService tMailProcessService, UserService userService) {
         this.tMailProcessService = tMailProcessService;
+        this.userService = userService;
     }
-    @PostMapping("start")
+    @PostMapping("tasks")
     String  startTaskProcess(@RequestBody TaskMailRequest task, Principal principal) {
+        System.out.println("break");
         task.setCreator(principal.getName());
         return tMailProcessService.startTask(task);
     }
-    @GetMapping("users/{username}/tasks")
-    List<TaskItemDto> getListOfTasks(@PathVariable  String username){
-      return tMailProcessService.getListOfCurrentTaskByUsername(username);
+    @GetMapping("users/{username}/tasks/{filter}")
+    Page<TaskItemDto> getListOfTasks(@PathVariable  String username, @PathVariable(name = "filter") String filter, @RequestParam(required = false, defaultValue = "1") Integer page, @RequestParam(required = false, defaultValue ="10" ) Integer limit){
+        if (filter.equals("all")) return tMailProcessService.getAllTasksOfUser(username,page,limit);
+        else if(filter.equals("completed")) return tMailProcessService.getDoneWithUserTasks(username,page,limit);
+        else if(filter.equals("current")) return tMailProcessService.getListOfCurrentTaskByUsername(username,page,limit);
+        else if (filter.equals("closed")) return tMailProcessService.getClosedTasksOfUser(username,page,limit);
+
+        else  {
+            Page<TaskItemDto> pagee =  new Page<TaskItemDto>();
+            pagee.setNumber(page);
+            return  pagee;
+        }
     }
 
+    @GetMapping("users")
+    List<UserDto> getUsers() {
+        return userService.getListOfUsers();
+    }
     @PostMapping("dostep")
     void doStep(@RequestBody StepRequest step, Principal principal) {
         tMailProcessService.doAction(step);

@@ -12,6 +12,8 @@ public class TaskMailRequest {
     @NotNull
     String creator;
     @NotNull
+    String title;
+    @NotNull
     String recipient;
     @NotNull
     String description;

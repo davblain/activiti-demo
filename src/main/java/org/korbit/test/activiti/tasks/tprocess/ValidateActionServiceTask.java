@@ -22,7 +22,7 @@ public class ValidateActionServiceTask implements JavaDelegate {
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
         ActionDto actionDto = delegateExecution.getVariable("actionToValidate", ActionDto.class);
-        List<ActionType> actionList = tMailProcessService.getAvailableActions("1",actionDto.getCreator());
+        List<ActionType> actionList = tMailProcessService.getAvailableActions("8",actionDto.getCreator());
         List<ActionDto> actions = (List<ActionDto>) delegateExecution.getVariable("actions");
 
         if (actionList.contains(actionDto.getType())) {

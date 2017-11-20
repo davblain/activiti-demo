@@ -10,7 +10,8 @@ import java.util.Arrays;
 public class CloseServiceTask implements JavaDelegate {
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-        delegateExecution.setVariable("assignee",delegateExecution.getVariable("initiator"));
+        delegateExecution.setVariable("assigner",delegateExecution.getVariable("initiator"));
         delegateExecution.setVariable("unAvailableActions", Arrays.asList(ActionType.Close,ActionType.Delegate,ActionType.Refinement));
+        delegateExecution.setVariable("state","closed");
     }
 }
