@@ -17,4 +17,5 @@ public class TaskDto {
     String description;
     String assignee;
     String state;
+    String curDuration;
 }

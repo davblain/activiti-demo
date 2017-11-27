@@ -19,6 +19,11 @@
                 <activiti:taskListener event="complete" class="org.korbit.test.activiti.listeners.CompleteListener"/>
             </extensionElements>
         </userTask>
+        <userTask id="userTask2" activiti:assignee="${assigner}">
+            <extensionElements>
+            <activiti:taskListener event="create" class="org.korbit.test.activiti.listeners.CreateListener"/>
+            </extensionElements>
+        </userTask>
         <sequenceFlow sourceRef="boundarytimer" targetRef="expiredService"/>
         <sequenceFlow sourceRef="userTask" targetRef="validateService"/>
         <sequenceFlow sourceRef="validateService" targetRef="actionGw"/>
@@ -51,12 +56,13 @@
         </serviceTask>
         <serviceTask id="cancelService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CancelServiceTask"/>
         <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask"/>
+        <sequenceFlow sourceRef="userTask2" targetRef="validateService"/>
         <sequenceFlow sourceRef="reopenService" targetRef="userTask"/>
         <sequenceFlow sourceRef="doneService" targetRef="theEnd"/>
         <sequenceFlow sourceRef="delegateService" targetRef="userTask"/>
-        <sequenceFlow sourceRef="cancelService" targetRef="userTask"/>
+        <sequenceFlow sourceRef="cancelService" targetRef="userTask2"/>
         <sequenceFlow sourceRef="expiredService" targetRef="theEnd"/>
-        <sequenceFlow sourceRef="closeService" targetRef="userTask"/>
+        <sequenceFlow sourceRef="closeService" targetRef="userTask2"/>
         <sequenceFlow sourceRef="refinementService" targetRef="userTask"/>
         <endEvent id="theEnd"/>
     </process>

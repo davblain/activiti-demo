@@ -86,12 +86,13 @@ public class TMailProcessService {
     }
     public Page<TaskItemDto> getListOfCurrentTaskByUsername(@NotNull String username,Integer page ,Integer limit) {
 
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().variableValueEquals("assigner",username).unfinished();
+        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().variableValueEquals("assigner",username)
+                .variableValueEquals("state","Created");
         return generatePage(query,username,page,limit);
     }
     @Transactional
     public Page<TaskItemDto> getDoneWithUserTasks(@NotNull String username,Integer page, Integer limit) {
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().involvedUser(username).variableValueEquals("State","Done");
+        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().involvedUser(username).variableValueEquals("state","Done");
         return generatePage(query,username,page,limit);
     }
      private TaskItemDto taskToTaskItemDto(HistoricProcessInstance task,String username) {
@@ -167,6 +168,7 @@ public class TMailProcessService {
         taskDto.setTitle((String) historicProcessInstance.getProcessVariables().get("title"));
         taskDto.setState(historicProcessInstance.getProcessVariables().get("state").toString());
         taskDto.setStartTime(historicProcessInstance.getStartTime());
+        taskDto.setCurDuration((String) historicProcessInstance.getProcessVariables().get("duration"));
         taskDto.setEndTime(historicProcessInstance.getEndTime());
         taskDto.setDescription((String) historicProcessInstance.getProcessVariables().get("description"));
         return taskDto;
