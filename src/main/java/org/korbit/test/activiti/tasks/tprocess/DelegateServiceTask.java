@@ -13,7 +13,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -28,5 +30,9 @@ public class DelegateServiceTask implements JavaDelegate {
       User user = Optional.ofNullable(identityService.createUserQuery().userId(recipient).singleResult())
               .orElseThrow(() -> new UserNotFoundException(recipient));
       action.setTime(new Date());
+      delegateExecution.setVariable("assigner",recipient);
+      List<String> userChain = (ArrayList<String>) delegateExecution.getVariable("userChain");
+      userChain.add(recipient);
+      delegateExecution.setVariable("userChain",userChain);
     }
 }

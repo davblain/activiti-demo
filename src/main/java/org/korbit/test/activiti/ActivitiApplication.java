@@ -2,6 +2,7 @@ package org.korbit.test.activiti;
 
 import org.activiti.engine.IdentityService;
 import org.activiti.engine.identity.Group;
+
 import org.activiti.engine.identity.User;
 import org.korbit.test.activiti.domain.GroupPermission;
 import org.korbit.test.activiti.models.ActionType;
@@ -19,6 +20,7 @@ import java.util.Arrays;
 public class ActivitiApplication {
 	@Autowired
 	GroupPermissionRepository groupPermissionRepository;
+
 	public static void main(String[] args) {
 		SpringApplication.run(ActivitiApplication.class, args);
 	}
@@ -27,6 +29,7 @@ public class ActivitiApplication {
 
 		return new InitializingBean() {
 			public void afterPropertiesSet() throws Exception {
+
 
 				Group group = identityService.newGroup("user");
 				group.setName("users");
@@ -46,6 +49,7 @@ public class ActivitiApplication {
 				//identityService.saveGroup(group);
 				User admin = identityService.newUser("admin");
 				admin.setPassword("admin");
+				admin.setFirstName("admin");
 				identityService.saveUser(admin);
 				identityService.createMembership("admin","user");
 				identityService.createMembership("admin","admin");

@@ -9,12 +9,13 @@
         </startEvent>
         <boundaryEvent id="boundarytimer" attachedToRef="userTask" cancelActivity="true">
             <timerEventDefinition>
-                <timeDuration>P2D</timeDuration>
+                <timeDuration>${duration}</timeDuration>
             </timerEventDefinition>
         </boundaryEvent>
         <sequenceFlow sourceRef="theStart" targetRef="userTask"/>
         <userTask id="userTask" activiti:assignee="${assigner}">
             <extensionElements>
+                <activiti:taskListener event="create" class="org.korbit.test.activiti.listeners.CreateListener"/>
                 <activiti:taskListener event="complete" class="org.korbit.test.activiti.listeners.CompleteListener"/>
             </extensionElements>
         </userTask>
@@ -33,7 +34,7 @@
         </sequenceFlow>
 
         <sequenceFlow sourceRef="actionGw" targetRef="reopenService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "Reopen"</conditionExpression>
+            <conditionExpression xsi:type="tFormalExpression">${action == "ReOpen"}</conditionExpression>
         </sequenceFlow>
         <sequenceFlow sourceRef="actionGw" targetRef="doneService">
             <conditionExpression xsi:type="tFormalExpression">${action == "Done"}</conditionExpression>
@@ -46,7 +47,7 @@
         <serviceTask id="closeService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CloseServiceTask"/>
         <serviceTask id="expiredService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ExpiredServiceTask"/>
         <serviceTask id="doneService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DoneServiceTask"/>
-        <serviceTask id="delegateService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DelegateServiceTask">
+        <serviceTask id="delegateService" activiti:delegateExpression="${delegateServiceTask}">
         </serviceTask>
         <serviceTask id="cancelService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CancelServiceTask"/>
         <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask"/>

@@ -17,6 +17,7 @@ public class TaskMailRequest {
     String recipient;
     @NotNull
     String description;
-    Long duration;
+    @NotNull
+    String duration;
 
 }

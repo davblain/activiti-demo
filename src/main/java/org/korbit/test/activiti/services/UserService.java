@@ -14,8 +14,8 @@ public class UserService {
     UserService(IdentityService identityService){
         this.identityService = identityService;
     }
-    public List<UserDto> getListOfUsers() {
-     return identityService.createUserQuery().orderByUserId().desc().list().stream().map(user -> {
+    public List<UserDto> getListOfUsers(String filter) {
+     return identityService.createUserQuery().orderByUserId().userFirstName(filter).desc().list().stream().map(user -> {
          UserDto us = new UserDto();
          us.setUsername(user.getId());
          return us;
