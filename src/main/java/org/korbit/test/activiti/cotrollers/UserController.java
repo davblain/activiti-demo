@@ -35,6 +35,7 @@ public class UserController {
         }
     }
 
+
     @GetMapping("users")
     List<UserDto> getUsers(@RequestParam(required = false,defaultValue = "") String filter) {
         return userService.getListOfUsers(filter);

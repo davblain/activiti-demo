@@ -15,5 +15,6 @@ public enum ActionType implements Serializable{
     Close,
     ReOpen,
     Cancel,
-    Create
+    Create,
+    ChangeDescription
 }

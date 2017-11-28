@@ -9,6 +9,7 @@ import java.util.List;
 @Setter
 public class Action {
     ActionType actionType;
+    boolean isStep;
     List<String> properties = new ArrayList<>();
     private Action(ActionType actionType) {
         this.actionType = actionType;
@@ -16,8 +17,13 @@ public class Action {
 
     static  public Action createActionByActionType(ActionType actionType) {
         Action action = new Action(actionType);
+        action.isStep = true;
         if (actionType.equals(ActionType.Create)||actionType.equals(ActionType.Delegate)){
            action.properties.add("recipient");
+        }
+        if (actionType.equals(ActionType.ChangeDescription)) {
+            action.properties.add("Description");
+            action.isStep = false;
         }
         return action;
     }

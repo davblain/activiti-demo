@@ -37,7 +37,6 @@
         <sequenceFlow sourceRef="actionGw" targetRef="closeService">
             <conditionExpression xsi:type="tFormalExpression">${action == "Close"}</conditionExpression>
         </sequenceFlow>
-
         <sequenceFlow sourceRef="actionGw" targetRef="reopenService">
             <conditionExpression xsi:type="tFormalExpression">${action == "ReOpen"}</conditionExpression>
         </sequenceFlow>
