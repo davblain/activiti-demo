@@ -22,7 +22,7 @@ public class State  implements Serializable{
         } else if (state.equals(StateType.Closed)) {
             statee.setUnavailableActions(Arrays.asList(ActionType.Refinement,ActionType.Delegate,ActionType.Close));
         } else
-            statee.setUnavailableActions(Arrays.asList(ActionType.ReOpen, ActionType.Delegate,ActionType.Cancel,ActionType.Done,ActionType.Close,ActionType.Refinement));
+            statee.setUnavailableActions(Arrays.asList(ActionType.ReOpen, ActionType.Delegate,ActionType.Cancel,ActionType.Done,ActionType.Close,ActionType.Refinement,ActionType.ChangeDescription));
 
         return statee;
     }

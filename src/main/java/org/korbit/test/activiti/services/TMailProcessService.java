@@ -6,6 +6,7 @@ import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricProcessInstanceQuery;
 import org.activiti.engine.identity.Group;
 import org.korbit.test.activiti.dto.*;
+import org.korbit.test.activiti.exceptions.TaskNotFoundException;
 import org.korbit.test.activiti.models.ActionType;
 
 import org.springframework.stereotype.Service;
@@ -93,7 +94,9 @@ public class TMailProcessService {
     }
 
     private boolean isUserAssignerOfTask(String taskId,String username) {
-        return historyService.createHistoricProcessInstanceQuery().includeProcessVariables().processInstanceId(taskId).singleResult().getProcessVariables().get("assigner").equals(username);
+        HistoricProcessInstance task = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().includeProcessVariables().processInstanceId(taskId).singleResult())
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        return task.getProcessVariables().get("assigner").equals(username);
     }
     @Transactional
     public List<ActionType> getAvailableActionTypes(@NotNull String taskId, @NotNull String username) {

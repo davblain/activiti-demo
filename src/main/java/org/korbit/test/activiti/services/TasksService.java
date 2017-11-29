@@ -73,7 +73,8 @@ public class TasksService {
         taskService.complete(task.getId(),taskVariables);
     }
     public TaskDto getTaskDetails(@NotNull String taskId) {
-        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).includeProcessVariables().singleResult();
+        HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).includeProcessVariables().singleResult())
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
         TaskDto taskDto = new TaskDto();
         taskDto.setUserChain((List<String>) Optional.ofNullable(historicProcessInstance.getProcessVariables().get("userChain")).orElse(new ArrayList<>()));
         taskDto.setAssignee((String)historicProcessInstance .getProcessVariables().get("assigner"));
@@ -104,8 +105,9 @@ public class TasksService {
                 .orElse(new ArrayList<String>());
     }
     public List<ActionType> getUnAvailableActionsOfTask(@NotNull String taskID) {
-        HistoricProcessInstance historicProcessInstance = historyService.createHistoricProcessInstanceQuery()
-                .processInstanceId(taskID).includeProcessVariables().singleResult();
+        HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery()
+                .processInstanceId(taskID).includeProcessVariables().singleResult())
+                .orElseThrow(() -> new TaskNotFoundException(taskID));
         State state = State.instanceState(StateType.valueOf(historicProcessInstance.getProcessVariables().get("state").toString())
         );
         return Optional.ofNullable(state.getUnavailableActions()).orElse(new ArrayList<>());
