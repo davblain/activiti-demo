@@ -32,28 +32,32 @@ public class ActivitiApplication {
 
 
 				Group group = identityService.newGroup("user");
-				group.setName("users");
-				group.setType("security-role");
+				group.setName("ROLE_USER");
+				group.setType("USER");
 				identityService.saveGroup(group);
 
 				Group group2 = identityService.newGroup("admin");
-				group2.setName("admins");
-				group2.setType("security-role");
+				group2.setName("ROLE_ADMIN");
+				group2.setType("ADMIN");
 				identityService.saveGroup(group2);
 
 				GroupPermission groupPermission = new GroupPermission();
 				groupPermission.setActionTypesIfAssigner(Arrays.asList(ActionType.Close,ActionType.Cancel,ActionType.Done,
 						ActionType.Delegate,ActionType.ReOpen,ActionType.Refinement));
 				groupPermission.setActionTypesIfNotAssigner(Arrays.asList(ActionType.ChangeDescription));
-				groupPermission.setGroupId(identityService.createGroupQuery().groupName("users").singleResult().getId());
+				groupPermission.setGroupId(identityService.createGroupQuery().groupName("ROLE_USER").singleResult().getId());
 				groupPermissionRepository.save(groupPermission);
-				//identityService.saveGroup(group);
+				User user = identityService.newUser("davblain");
+				user.setFirstName("davblain");
+				user.setPassword("587238");
+				identityService.saveUser(user);
 				User admin = identityService.newUser("admin");
 				admin.setPassword("admin");
 				admin.setFirstName("admin");
 				identityService.saveUser(admin);
 				identityService.createMembership("admin","user");
 				identityService.createMembership("admin","admin");
+				identityService.createMembership("davblain","user");
 
 			}
 		};
