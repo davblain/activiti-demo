@@ -31,7 +31,7 @@ public class DelegateServiceTask implements JavaDelegate {
               .orElseThrow(() -> new UserNotFoundException(recipient));
       action.setTime(new Date());
       delegateExecution.setVariable("assigner",recipient);
-      List<String> userChain = (ArrayList<String>) delegateExecution.getVariable("userChain");
+      List<String> userChain = (ArrayList<String>) Optional.ofNullable(delegateExecution.getVariable("userChain")).orElse(new ArrayList<>());
       userChain.add(recipient);
       delegateExecution.setVariable("userChain",userChain);
     }

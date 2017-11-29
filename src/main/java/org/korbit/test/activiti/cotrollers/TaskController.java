@@ -9,6 +9,7 @@ import org.korbit.test.activiti.services.TMailProcessService;
 import org.korbit.test.activiti.services.TasksService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.security.Principal;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -36,7 +37,7 @@ public class TaskController {
         return "ERR";
     }
     @PostMapping("tasks/{taskId}/dostep")
-    void doStep(@RequestBody ActionDto actionDto, @PathVariable String taskId, Principal principal) {
+    void doStep(@RequestBody @Valid ActionDto actionDto, @PathVariable String taskId, Principal principal) {
         actionDto.setCreator(principal.getName());
         tasksService.doAction(taskId,actionDto);
     }

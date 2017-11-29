@@ -14,7 +14,6 @@ import java.util.Map;
 @Getter
 @Setter
 public class ActionDto implements Serializable {
-    @NotNull
     String creator;
     Date time = new Date();
     Map<String,String> data;
