@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Bean;
 
 import java.util.Arrays;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = org.activiti.spring.boot.SecurityAutoConfiguration.class)
 //@ImportResource("classpath:activiti-config.xml")
 public class ActivitiApplication {
 	@Autowired

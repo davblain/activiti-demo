@@ -12,7 +12,7 @@ import java.util.Arrays;
 public class DoneServiceTask implements JavaDelegate {
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-        delegateExecution.setVariable("state", "Done");
+        delegateExecution.setVariable("state", StateType.Done.toString());
 
     }
 }

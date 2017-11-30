@@ -9,6 +9,7 @@ import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.exceptions.TaskNotFoundException;
 import org.korbit.test.activiti.models.ActionType;
 
+import org.korbit.test.activiti.models.StateType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,24 +42,36 @@ public class TMailProcessService {
        return actionsList.get(actionsList.size()-1);
     }
     @Transactional
-    public Page<TaskItemDto> getListOfTaskCreatedByUser(@NotNull String username,Integer page,Integer limit) {
+    public Page<TaskItemDto> getListOfTaskCreatedByUser(@NotNull String username,@NotNull Integer page,@NotNull Integer limit) {
         HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().variableValueEquals("initiator",username);
         return generatePage(query,username,page,limit);
 
     }
     @Transactional
-    public Page<TaskItemDto> getListOfCurrentTaskByUsername(@NotNull String username,Integer page ,Integer limit) {
-
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().variableValueEquals("assigner",username)
-                .variableValueEquals("state","Created");
+    public Page<TaskItemDto> getListOfExpiredTasks(@NotNull String username,@NotNull Integer page, @NotNull Integer limit) {
+                return generatePage(generateHistoryQueryByState(StateType.Expired).involvedUser(username),username,page,limit);
+    }
+    @Transactional
+    public Page<TaskItemDto> getListOfCurrentTaskByUsername(@NotNull String username,@NotNull  Integer page ,@NotNull  Integer limit) {
+        return generatePage(generateHistoryQueryByState(StateType.Created).variableValueEquals("assigner",username),username,page,limit);
+    }
+    @Transactional
+    public Page<TaskItemDto> getDoneWithUserTasks(@NotNull String username,@NotNull Integer page, @NotNull Integer limit) {
+        return generatePage(generateHistoryQueryByState(StateType.Done).involvedUser(username),username,page,limit);
+    }
+    @Transactional
+    public Page<TaskItemDto> getAllTasksOfUser(@NotNull String username, Integer page, Integer limit)  {
+        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().involvedUser(username);
         return generatePage(query,username,page,limit);
     }
     @Transactional
-    public Page<TaskItemDto> getDoneWithUserTasks(@NotNull String username,Integer page, Integer limit) {
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().involvedUser(username).variableValueEquals("state","Done");
-        return generatePage(query,username,page,limit);
+    public Page <TaskItemDto> getClosedTasksOfUser(@NotNull String username,Integer page ,Integer limit) {
+        return generatePage(generateHistoryQueryByState(StateType.Closed).involvedUser(username),username,page,limit);
     }
-     private TaskItemDto taskToTaskItemDto(HistoricProcessInstance task,String username) {
+    private HistoricProcessInstanceQuery generateHistoryQueryByState(StateType state) {
+        return historyService.createHistoricProcessInstanceQuery().variableValueEquals("state",state.toString());
+    }
+    private TaskItemDto taskToTaskItemDto(HistoricProcessInstance task,String username) {
 
         TaskItemDto t = new TaskItemDto();
         t.setCreator((String)(task.getProcessVariables().get("initiator")));
@@ -73,16 +86,7 @@ public class TMailProcessService {
         });
         return t;
     }
-    @Transactional
-    public Page<TaskItemDto> getAllTasksOfUser(@NotNull String username, Integer page ,Integer limit)  {
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().involvedUser(username);
-        return generatePage(query,username,page,limit);
-    }
-    @Transactional
-    public Page <TaskItemDto> getClosedTasksOfUser(@NotNull String username,Integer page ,Integer limit) {
-        HistoricProcessInstanceQuery query = historyService.createHistoricProcessInstanceQuery().involvedUser(username).variableValueEquals("state","Closed");
-        return generatePage(query,username,page,limit);
-    }
+
 
     private Page<TaskItemDto> generatePage(HistoricProcessInstanceQuery query,String username, Integer page,Integer limit) {
         Page<TaskItemDto> pagee = new  Page<>();
@@ -93,7 +97,7 @@ public class TMailProcessService {
         return pagee;
     }
 
-    private boolean isUserAssignerOfTask(String taskId,String username) {
+    private boolean isUserAssignerOfTask(@NotNull String taskId,String username) {
         HistoricProcessInstance task = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().includeProcessVariables().processInstanceId(taskId).singleResult())
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
         return task.getProcessVariables().get("assigner").equals(username);
@@ -112,7 +116,7 @@ public class TMailProcessService {
         return filterUnAvailableActionTypes(taskId,availableActions);
 
     }
-    private List<ActionType> filterUnAvailableActionTypes(String taskId, List<ActionType> actions) {
+    private List<ActionType> filterUnAvailableActionTypes(@NotNull String taskId, List<ActionType> actions) {
         return actions.stream().filter( actionType -> ! tasksService.getUnAvailableActionsOfTask(taskId).contains(actionType))
                 .distinct()
                 .collect(Collectors.toList());

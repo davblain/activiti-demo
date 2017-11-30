@@ -66,6 +66,11 @@
 			<artifactId>activiti-spring-boot-starter-jpa</artifactId>
 			<version>5.22.0</version>
 		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>0.7.0</version>
+		</dependency>
 	</dependencies>
 
 	<build>

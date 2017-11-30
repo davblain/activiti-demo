@@ -11,6 +11,6 @@ import java.util.Arrays;
 public class ReOpenServiceTask implements JavaDelegate {
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-        delegateExecution.setVariable("state", "Created");
+        delegateExecution.setVariable("state", StateType.Created.toString());
     }
 }

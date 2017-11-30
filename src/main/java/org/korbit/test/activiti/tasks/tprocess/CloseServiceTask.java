@@ -14,6 +14,6 @@ public class CloseServiceTask implements JavaDelegate {
     public void execute(DelegateExecution delegateExecution) throws Exception {
         delegateExecution.setVariable("assigner",delegateExecution.getVariable("initiator"));
 
-        delegateExecution.setVariable("state", "Closed");
+        delegateExecution.setVariable("state", StateType.Closed.toString());
     }
 }

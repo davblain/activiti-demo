@@ -3,8 +3,15 @@ package org.korbit.test.activiti.cotrollers;
 import org.korbit.test.activiti.dto.*;
 import org.korbit.test.activiti.models.Action;
 import org.korbit.test.activiti.models.ActionType;
+import org.korbit.test.activiti.security.TokenUtils;
 import org.korbit.test.activiti.services.TMailProcessService;
 import org.korbit.test.activiti.services.UserService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -16,9 +23,16 @@ import java.util.stream.Collectors;
 public class UserController {
     final private TMailProcessService tMailProcessService;
     final private UserService userService;
-    UserController(TMailProcessService tMailProcessService, UserService userService) {
+    final private UserDetailsService userDetailsService;
+    final private AuthenticationManager authenticationManager;
+    final  private TokenUtils tokenUtils;
+    UserController(TMailProcessService tMailProcessService, UserService userService, AuthenticationManager authenticationManager,
+                   TokenUtils tokenUtils, UserDetailsService userDetailsService) {
         this.tMailProcessService = tMailProcessService;
         this.userService = userService;
+        this.userDetailsService = userDetailsService;
+        this.authenticationManager = authenticationManager;
+        this.tokenUtils = tokenUtils;
     }
 
     @GetMapping("users/{username}/tasks/{filter}")
@@ -39,6 +53,17 @@ public class UserController {
     @GetMapping("users")
     List<UserDto> getUsers(@RequestParam(required = false,defaultValue = "") String filter) {
         return userService.getListOfUsers(filter);
+    }
+    @PostMapping("login")
+    String sign_in(@RequestBody LoginRequest user) {
+        Authentication authentication = this.authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        user.getUsername(),
+                        user.getPassword() )
+        );
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(user.getUsername());
+        return this.tokenUtils.generateToken(userDetails);
     }
 
 

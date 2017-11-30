@@ -8,6 +8,6 @@ import org.korbit.test.activiti.models.StateType;
 public class CancelServiceTask implements JavaDelegate{
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-        delegateExecution.setVariable("state", "Cancelled");
+        delegateExecution.setVariable("state", StateType.Cancelled.toString());
     }
 }

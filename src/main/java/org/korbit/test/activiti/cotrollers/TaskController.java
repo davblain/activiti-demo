@@ -24,7 +24,7 @@ public class TaskController {
         this.tMailProcessService = tMailProcessService;
     }
     @PostMapping("tasks")
-    String  startTaskProcess(@RequestBody TaskMailRequest task, Principal principal) {
+    String  startTaskProcess(@RequestBody @Valid TaskMailRequest task, Principal principal) {
         task.setCreator(principal.getName());
         return tasksService.startTask(task);
     }
