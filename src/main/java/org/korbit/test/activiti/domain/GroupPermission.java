@@ -23,6 +23,8 @@ public class GroupPermission {
     List<ActionType> actionTypesIfNotAssigner = new ArrayList<>();
     @ElementCollection
     List<ActionType> actionTypesIfAssigner = new ArrayList<>();
+    @ElementCollection
+    List<ActionType> actionTypesIfCreator = new ArrayList<>();
     public GroupPermission() {
 
     }

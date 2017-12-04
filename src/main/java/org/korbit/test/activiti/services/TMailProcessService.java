@@ -97,10 +97,15 @@ public class TMailProcessService {
         return pagee;
     }
 
-    private boolean isUserAssignerOfTask(@NotNull String taskId,String username) {
+    private boolean isUserAssignerOfTask(@NotNull String taskId,@NotNull String username) {
         HistoricProcessInstance task = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().includeProcessVariables().processInstanceId(taskId).singleResult())
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
         return task.getProcessVariables().get("assigner").equals(username);
+    }
+    private  boolean isUserCreatorOfTask(@NotNull String taskId, @NotNull String username) {
+        HistoricProcessInstance task = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().includeProcessVariables().processInstanceId(taskId).singleResult())
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        return task.getProcessVariables().get("initiator").equals(username);
     }
     @Transactional
     public List<ActionType> getAvailableActionTypes(@NotNull String taskId, @NotNull String username) {
@@ -111,6 +116,8 @@ public class TMailProcessService {
                     if (isUserAssignerOfTask(taskId,username))
                         listOfActions.addAll(groupPermission.getActionTypesIfAssigner());
                     listOfActions.addAll(groupPermission.getActionTypesIfNotAssigner());
+                    if (isUserCreatorOfTask(taskId,username))
+                        listOfActions.addAll(groupPermission.getActionTypesIfCreator());
                     return listOfActions.stream();
                 }).collect(Collectors.toList());
         return filterUnAvailableActionTypes(taskId,availableActions);

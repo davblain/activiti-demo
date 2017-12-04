@@ -42,6 +42,7 @@ public class UserController {
         else if(filter.equals("current")) return tMailProcessService.getListOfCurrentTaskByUsername(username,page,limit);
         else if (filter.equals("closed")) return tMailProcessService.getClosedTasksOfUser(username,page,limit);
         else if (filter.equals("created-by-user")) return tMailProcessService.getListOfTaskCreatedByUser(username,page,limit);
+        else  if (filter.equals("expired")) return  tMailProcessService.getListOfExpiredTasks(username,page,limit);
         else  {
             Page<TaskItemDto> pagee =  new Page<TaskItemDto>();
             pagee.setNumber(page);
@@ -55,7 +56,7 @@ public class UserController {
         return userService.getListOfUsers(filter);
     }
     @PostMapping("login")
-    String sign_in(@RequestBody LoginRequest user) {
+    LoginResponse sign_in(@RequestBody LoginRequest user) {
         Authentication authentication = this.authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         user.getUsername(),
@@ -63,7 +64,12 @@ public class UserController {
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(user.getUsername());
-        return this.tokenUtils.generateToken(userDetails);
+        LoginResponse response = new LoginResponse();
+        response.setToken(this.tokenUtils.generateToken(userDetails));
+        response.setUsername(userDetails.getUsername());
+        response.setExpirationTime(this.tokenUtils.getExpirationDateFromToken(response.getToken()));
+
+        return response;
     }
 
 

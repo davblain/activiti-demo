@@ -45,6 +45,7 @@ public class ActivitiApplication {
 				groupPermission.setActionTypesIfAssigner(Arrays.asList(ActionType.Close,ActionType.Cancel,ActionType.Done,
 						ActionType.Delegate,ActionType.ReOpen,ActionType.Refinement));
 				groupPermission.setActionTypesIfNotAssigner(Arrays.asList(ActionType.ChangeDescription));
+				groupPermission.setActionTypesIfCreator(Arrays.asList(ActionType.Done));
 				groupPermission.setGroupId(identityService.createGroupQuery().groupName("ROLE_USER").singleResult().getId());
 				groupPermissionRepository.save(groupPermission);
 				User user = identityService.newUser("davblain");

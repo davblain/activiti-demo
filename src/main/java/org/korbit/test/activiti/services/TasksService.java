@@ -51,8 +51,12 @@ public class TasksService {
             action.setCreator(task.getCreator());
             action.setType(ActionType.Create);
             action.setData(new HashMap<>());
+
             action.getData().put("recipient",task.getRecipient());
             actionDtos.add(action);
+            ArrayList<String> userChain = new ArrayList<String>();
+            userChain.add(task.getRecipient());
+            variables.put("userChain",userChain);
             variables.put("actions",actionDtos);
             variables.put("state",  "Created");
             variables.put("duration",task.getDuration());
@@ -108,9 +112,14 @@ public class TasksService {
         HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery()
                 .processInstanceId(taskID).includeProcessVariables().singleResult())
                 .orElseThrow(() -> new TaskNotFoundException(taskID));
-        State state = State.instanceState(StateType.valueOf(historicProcessInstance.getProcessVariables().get("state").toString())
-        );
-        return Optional.ofNullable(state.getUnavailableActions()).orElse(new ArrayList<>());
+        ArrayList<ActionType> act = new ArrayList<>();
+
+        if (((ArrayList<String>)(historicProcessInstance.getProcessVariables().get("userChain"))).size()==1) {
+            act.add(ActionType.Refinement);
+        }
+        State state = State.instanceState(StateType.valueOf(historicProcessInstance.getProcessVariables().get("state").toString()));
+        act.addAll(Optional.ofNullable(state.getUnavailableActions()).orElse(new ArrayList<>()));
+        return act;
     }
     @Transactional
     public List<ActionDto> getListOfActions(@NotNull String taskId) {
