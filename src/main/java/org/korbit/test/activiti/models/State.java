@@ -20,8 +20,11 @@ public class State  implements Serializable{
         if (state.equals(StateType.Created)) {
             statee.setUnavailableActions(Arrays.asList(ActionType.ReOpen));
         } else if (state.equals(StateType.Closed)) {
-            statee.setUnavailableActions(Arrays.asList(ActionType.Refinement,ActionType.Delegate,ActionType.Close));
-        } else
+            statee.setUnavailableActions(Arrays.asList(ActionType.Refinement, ActionType.Delegate, ActionType.Close));
+        } else if (state.equals(StateType.Done)) {
+                statee.setUnavailableActions(Arrays.asList(ActionType.Delegate,ActionType.Cancel,ActionType.Done,ActionType.Close,ActionType.Refinement,ActionType.ChangeDescription));
+        }
+         else
             statee.setUnavailableActions(Arrays.asList(ActionType.ReOpen, ActionType.Delegate,ActionType.Cancel,ActionType.Done,ActionType.Close,ActionType.Refinement,ActionType.ChangeDescription));
 
         return statee;

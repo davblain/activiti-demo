@@ -57,7 +57,7 @@
         <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask"/>
         <sequenceFlow sourceRef="userTask2" targetRef="validateService"/>
         <sequenceFlow sourceRef="reopenService" targetRef="userTask"/>
-        <sequenceFlow sourceRef="doneService" targetRef="theEnd"/>
+        <sequenceFlow sourceRef="doneService" targetRef="userTask2"/>
         <sequenceFlow sourceRef="delegateService" targetRef="userTask"/>
         <sequenceFlow sourceRef="cancelService" targetRef="userTask2"/>
         <sequenceFlow sourceRef="expiredService" targetRef="theEnd"/>
