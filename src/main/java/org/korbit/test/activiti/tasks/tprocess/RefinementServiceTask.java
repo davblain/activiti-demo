@@ -8,7 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class RefinementServiceTask implements JavaDelegate {
+public class    RefinementServiceTask implements JavaDelegate {
+
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
         ArrayList<String> userChain =  Optional.ofNullable((ArrayList<String>)delegateExecution.getVariable("userChain")).orElse(new ArrayList<>()) ;
@@ -18,10 +19,6 @@ public class RefinementServiceTask implements JavaDelegate {
         } else {
             assigner = userChain.get(userChain.size() - 2);
         }
-        List<ActionDto> actions = (List<ActionDto>) delegateExecution.getVariable("actions");
-        actions.get(actions.size()-1).getData().put("recipient",assigner);
-        delegateExecution.setVariable("actions",actions);
         delegateExecution.setVariable("assigner",assigner);
-        userChain.add(assigner);
     }
 }

@@ -4,5 +4,5 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum StateType {
-    Created,Closed,Done,Expired,Cancelled;
+    CreatedState,ClosedState,DoneState,ExpiredState,CancelledState,OpenedState;
 }

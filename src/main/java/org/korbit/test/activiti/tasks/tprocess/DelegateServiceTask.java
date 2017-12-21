@@ -6,9 +6,11 @@ import org.activiti.engine.delegate.Expression;
 import org.activiti.engine.delegate.JavaDelegate;
 import org.activiti.engine.identity.User;
 import org.korbit.test.activiti.dto.ActionDto;
+import org.korbit.test.activiti.dto.DelegateNotification;
 import org.korbit.test.activiti.exceptions.UserNotFoundException;
 import org.korbit.test.activiti.services.TMailProcessService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -23,16 +25,18 @@ import java.util.Optional;
 public class DelegateServiceTask implements JavaDelegate {
     @Autowired
     IdentityService identityService;
+    @Autowired
+    private SimpMessagingTemplate template;
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-      ActionDto action = delegateExecution.getVariable("action",ActionDto.class);
-      String recipient = Optional.ofNullable(action.getData().get("recipient")).orElseThrow(IllegalArgumentException::new);
+      String recipient = delegateExecution.getVariable("recipient").toString();
       User user = Optional.ofNullable(identityService.createUserQuery().userId(recipient).singleResult())
               .orElseThrow(() -> new UserNotFoundException(recipient));
-      action.setTime(new Date());
-      delegateExecution.setVariable("assigner",recipient);
-      List<String> userChain = (ArrayList<String>) Optional.ofNullable(delegateExecution.getVariable("userChain")).orElse(new ArrayList<>());
-      userChain.add(recipient);
-      delegateExecution.setVariable("userChain",userChain);
+        List<String> userChain =  Optional.ofNullable((ArrayList<String>)delegateExecution.getVariable("userChain"))
+                .orElse(new ArrayList<>());
+        userChain.add(recipient);
+        delegateExecution.setVariable("userChain",userChain);
+        delegateExecution.setVariable("assigner",recipient);
+        //template.convertAndSendToUser(recipient, "/queue/private", new DelegateNotification(delegateExecution.getProcessInstanceId(),action.getCreator()));
     }
 }

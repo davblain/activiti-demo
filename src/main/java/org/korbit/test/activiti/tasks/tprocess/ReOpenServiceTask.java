@@ -9,8 +9,9 @@ import org.korbit.test.activiti.models.StateType;
 import java.util.Arrays;
 
 public class ReOpenServiceTask implements JavaDelegate {
+
     @Override
     public void execute(DelegateExecution delegateExecution) throws Exception {
-        delegateExecution.setVariable("state", StateType.Created.toString());
+        delegateExecution.setVariable("state", StateType.CreatedState.toString());
     }
 }

@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:activiti="http://activiti.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" typeLanguage="http://www.w3.org/2001/XMLSchema" expressionLanguage="http://www.w3.org/1999/XPath" targetNamespace="http://www.activiti.org/test">
+  <process id="myProcess" name="My process" isExecutable="true">
+    <startEvent id="startevent1" name="Start"></startEvent>
+    <sequenceFlow id="Flow1" sourceRef="startevent1" targetRef="stateGw"></sequenceFlow>
+    <sequenceFlow id="OpenedState" name="OpenedState" sourceRef="stateGw" targetRef="scripttask1">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${state == "OpenedState"}]]></conditionExpression>
+    </sequenceFlow>
+    <exclusiveGateway id="stateGw" name="State Gw" default="CreatedState"></exclusiveGateway>
+    <exclusiveGateway id="OpenedStateActions" name="OpenedStateActions"></exclusiveGateway>
+    <exclusiveGateway id="DoneStateActions" name="DoneStateActions"></exclusiveGateway>
+    <sequenceFlow id="DoneState" name="DoneState" sourceRef="stateGw" targetRef="scripttask2">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${state == "DoneState"}]]></conditionExpression>
+    </sequenceFlow>
+    <endEvent id="ChangeStateEnd" name="ChangeStateEnd"></endEvent>
+    <endEvent id="DelegateEnd" name="DelegateEnd"></endEvent>
+    <parallelGateway id="parallelgateway1" name="Parallel Gateway"></parallelGateway>
+    <sequenceFlow id="flow8" sourceRef="parallelgateway1" targetRef="DelegateProcessCall"></sequenceFlow>
+    <scriptTask id="scripttask1" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>execution.setVariable("timerOn", "true");</script>
+    </scriptTask>
+    <sequenceFlow id="flow10" sourceRef="scripttask1" targetRef="OpenedStateActions"></sequenceFlow>
+    <scriptTask id="scripttask2" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>execution.setVariable("timerOn", "false");</script>
+    </scriptTask>
+    <sequenceFlow id="flow11" sourceRef="scripttask2" targetRef="DoneStateActions"></sequenceFlow>
+    <scriptTask id="scripttask4" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>
+	action.data.put("newState", "ClosedState");
+	execution.setVariable("action",action);
+      </script>
+    </scriptTask>
+    <sequenceFlow id="flow13" sourceRef="scripttask4" targetRef="ChangeStateTask"></sequenceFlow>
+    <scriptTask id="scripttask5" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>action.data.put("newState", "OpenedState");
+execution.setVariable("action",action);
+
+</script>
+    </scriptTask>
+    <sequenceFlow id="flow14" sourceRef="scripttask5" targetRef="ChangeStateTask"></sequenceFlow>
+    <scriptTask id="scripttask6" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>	action.data.put("recipient",initiator);
+	action.data.put("newState", "DoneState");
+	execution.setVariable("action",action);
+</script>
+    </scriptTask>
+    <sequenceFlow id="ReOpenAction" name="ReOpenAction" sourceRef="DoneStateActions" targetRef="scripttask5">
+      <documentation>
+        creator,assigner
+      </documentation>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "ReOpenAction"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="CloseAction" name="CloseAction" sourceRef="DoneStateActions" targetRef="scripttask4">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "CloseAction"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="DoneAction" name="DoneAction" sourceRef="OpenedStateActions" targetRef="scripttask6">
+      <documentation>
+        creator,assigner
+      </documentation>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "DoneAction"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow19" sourceRef="parallelgateway1" targetRef="ChangeStateTask"></sequenceFlow>
+    <sequenceFlow id="flow20" sourceRef="scripttask6" targetRef="parallelgateway1"></sequenceFlow>
+    <scriptTask id="scripttask7" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>if (userChain.size() == 1) {
+            assigner = userChain.get(userChain.size() - 1);
+        } else {
+            assigner = userChain.get(userChain.size() - 2);
+        }
+action.data.put("recipient",assigner);
+execution.setVariable("action",action);</script>
+    </scriptTask>
+    <sequenceFlow id="RefinementAction" name="RefinementAction" sourceRef="OpenedStateActions" targetRef="scripttask7">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "RefinementAction"}]]></conditionExpression>
+    </sequenceFlow>
+    <sequenceFlow id="flow22" sourceRef="scripttask7" targetRef="DelegateProcessCall"></sequenceFlow>
+    <sequenceFlow id="DelegateAction" name="DelegateAction" sourceRef="OpenedStateActions" targetRef="DelegateProcessCall">
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "DelegateAction"}]]></conditionExpression>
+    </sequenceFlow>
+    <callActivity id="DelegateProcessCall" name="DelegateProcess Call" calledElement="delegateProcess">
+      <extensionElements>
+        <activiti:in sourceExpression="${action.data.recipient}" target="recipient"></activiti:in>
+        <activiti:in source="userChain" target="userChain"></activiti:in>
+        <activiti:out source="userChain" target="userChain"></activiti:out>
+        <activiti:out source="recipient" target="assigner"></activiti:out>
+      </extensionElements>
+    </callActivity>
+    <sequenceFlow id="flow23" sourceRef="DelegateProcessCall" targetRef="NotificationService"></sequenceFlow>
+    <scriptTask id="ChangeStateTask" name="ChangeStateTask" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>
+        execution.setVariable("state",action.data.newState);
+      </script>
+    </scriptTask>
+    <sequenceFlow id="flow24" sourceRef="ChangeStateTask" targetRef="ChangeStateEnd"></sequenceFlow>
+    <scriptTask id="scripttask8" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>execution.setVariable("timerOn", "true")</script>
+    </scriptTask>
+    <sequenceFlow id="CreatedState" name="CreatedState" sourceRef="stateGw" targetRef="scripttask8"></sequenceFlow>
+    <exclusiveGateway id="CreatedStateActions" name="CreatedStateActions"></exclusiveGateway>
+    <sequenceFlow id="flow25" sourceRef="scripttask8" targetRef="CreatedStateActions"></sequenceFlow>
+    <sequenceFlow id="CreateAction" name="CreateAction" sourceRef="CreatedStateActions" targetRef="scripttask9"></sequenceFlow>
+    <parallelGateway id="parallelgateway2" name="Parallel Gateway"></parallelGateway>
+    <scriptTask id="scripttask9" name="Script Task" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>action.data.put("newState", "OpenedState");
+        action.data.put("recipient",assigner);
+        println(action.data.newState+ "1");
+        execution.setVariable("action",action);
+        println(action.data.newState+"2");
+      </script>
+    </scriptTask>
+    <sequenceFlow id="flow26" sourceRef="scripttask9" targetRef="parallelgateway2"></sequenceFlow>
+    <sequenceFlow id="flow27" sourceRef="parallelgateway2" targetRef="ChangeStateTask"></sequenceFlow>
+    <sequenceFlow id="flow28" sourceRef="parallelgateway2" targetRef="DelegateProcessCall"></sequenceFlow>
+    <serviceTask id="NotificationService" name="NotificateAssignerService" activiti:delegateExpression="${notificationService}"></serviceTask>
+    <sequenceFlow id="flow29" sourceRef="NotificationService" targetRef="DelegateEnd"></sequenceFlow>
+    <scriptTask id="ChangeDescriptionTask" name="ChangeDescriptionTask" scriptFormat="groovy" activiti:autoStoreVariables="false">
+      <script>
+        execution.setVariable("description",action.data.description);
+      </script>
+    </scriptTask>
+    <sequenceFlow id="ChangeDescriptionAction" name="ChangeDescriptionAction" sourceRef="OpenedStateActions" targetRef="ChangeDescriptionTask">
+      <documentation textFormat="text/plain">
+        assigner,
+        isNotStep
+      </documentation>
+      <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "ChangeDescriptionAction"}]]></conditionExpression>
+    </sequenceFlow>
+    <endEvent id="ChangeDescriptionEnd" name="Endd"></endEvent>
+    <sequenceFlow id="flow30" sourceRef="ChangeDescriptionTask" targetRef="ChangeDescriptionEnd"></sequenceFlow>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_myProcess">
+    <bpmndi:BPMNPlane bpmnElement="myProcess" id="BPMNPlane_myProcess">
+      <bpmndi:BPMNShape bpmnElement="startevent1" id="BPMNShape_startevent1">
+        <omgdc:Bounds height="35.0" width="41.0" x="60.0" y="309.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="stateGw" id="BPMNShape_stateGw">
+        <omgdc:Bounds height="40.0" width="40.0" x="210.0" y="306.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="OpenedStateActions" id="BPMNShape_OpenedStateAssignerActions">
+        <omgdc:Bounds height="40.0" width="40.0" x="410.0" y="153.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="DoneStateActions" id="BPMNShape_DoneStateActions">
+        <omgdc:Bounds height="40.0" width="40.0" x="390.0" y="399.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="ChangeStateEnd" id="BPMNShape_ChangeStateEnd">
+        <omgdc:Bounds height="35.0" width="35.0" x="910.0" y="319.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="DelegateEnd" id="BPMNShape_DelegateEnd">
+        <omgdc:Bounds height="35.0" width="35.0" x="1050.0" y="150.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="parallelgateway1" id="BPMNShape_parallelgateway1">
+        <omgdc:Bounds height="40.0" width="40.0" x="683.0" y="238.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask1" id="BPMNShape_scripttask1">
+        <omgdc:Bounds height="55.0" width="105.0" x="250.0" y="146.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask2" id="BPMNShape_scripttask2">
+        <omgdc:Bounds height="55.0" width="105.0" x="260.0" y="392.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask4" id="BPMNShape_scripttask4">
+        <omgdc:Bounds height="55.0" width="105.0" x="544.0" y="309.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask5" id="BPMNShape_scripttask5">
+        <omgdc:Bounds height="55.0" width="105.0" x="544.0" y="430.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask6" id="BPMNShape_scripttask6">
+        <omgdc:Bounds height="55.0" width="105.0" x="527.0" y="233.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask7" id="BPMNShape_scripttask7">
+        <omgdc:Bounds height="55.0" width="105.0" x="550.0" y="60.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="DelegateProcessCall" id="BPMNShape_DelegateProcessCall">
+        <omgdc:Bounds height="63.0" width="105.0" x="771.0" y="142.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="ChangeStateTask" id="BPMNShape_ChangeStateTask">
+        <omgdc:Bounds height="55.0" width="105.0" x="750.0" y="309.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask8" id="BPMNShape_scripttask8">
+        <omgdc:Bounds height="55.0" width="105.0" x="260.0" y="520.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="CreatedStateActions" id="BPMNShape_CreatedStateActions">
+        <omgdc:Bounds height="40.0" width="40.0" x="400.0" y="527.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="parallelgateway2" id="BPMNShape_parallelgateway2">
+        <omgdc:Bounds height="40.0" width="40.0" x="771.0" y="527.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="scripttask9" id="BPMNShape_scripttask9">
+        <omgdc:Bounds height="55.0" width="105.0" x="528.0" y="520.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="NotificationService" id="BPMNShape_NotificationService">
+        <omgdc:Bounds height="55.0" width="105.0" x="920.0" y="136.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="ChangeDescriptionTask" id="BPMNShape_ChangeDescriptionTask">
+        <omgdc:Bounds height="61.0" width="131.0" x="760.0" y="20.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="ChangeDescriptionEnd" id="BPMNShape_ChangeDescriptionEnd">
+        <omgdc:Bounds height="35.0" width="35.0" x="1008.0" y="33.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="Flow1" id="BPMNEdge_Flow1">
+        <omgdi:waypoint x="101.0" y="326.0"></omgdi:waypoint>
+        <omgdi:waypoint x="210.0" y="326.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="OpenedState" id="BPMNEdge_OpenedState">
+        <omgdi:waypoint x="230.0" y="306.0"></omgdi:waypoint>
+        <omgdi:waypoint x="230.0" y="219.0"></omgdi:waypoint>
+        <omgdi:waypoint x="230.0" y="174.0"></omgdi:waypoint>
+        <omgdi:waypoint x="250.0" y="173.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="65.0" x="240.0" y="267.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="DoneState" id="BPMNEdge_DoneState">
+        <omgdi:waypoint x="230.0" y="346.0"></omgdi:waypoint>
+        <omgdi:waypoint x="230.0" y="418.0"></omgdi:waypoint>
+        <omgdi:waypoint x="260.0" y="419.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="52.0" x="240.0" y="362.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow8" id="BPMNEdge_flow8">
+        <omgdi:waypoint x="723.0" y="258.0"></omgdi:waypoint>
+        <omgdi:waypoint x="764.0" y="258.0"></omgdi:waypoint>
+        <omgdi:waypoint x="822.0" y="222.0"></omgdi:waypoint>
+        <omgdi:waypoint x="823.0" y="205.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow10" id="BPMNEdge_flow10">
+        <omgdi:waypoint x="355.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="410.0" y="173.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow11" id="BPMNEdge_flow11">
+        <omgdi:waypoint x="365.0" y="419.0"></omgdi:waypoint>
+        <omgdi:waypoint x="390.0" y="419.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow13" id="BPMNEdge_flow13">
+        <omgdi:waypoint x="649.0" y="336.0"></omgdi:waypoint>
+        <omgdi:waypoint x="750.0" y="336.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow14" id="BPMNEdge_flow14">
+        <omgdi:waypoint x="649.0" y="457.0"></omgdi:waypoint>
+        <omgdi:waypoint x="802.0" y="457.0"></omgdi:waypoint>
+        <omgdi:waypoint x="802.0" y="364.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="ReOpenFlow" id="BPMNEdge_ReOpenFlow">
+        <omgdi:waypoint x="430.0" y="419.0"></omgdi:waypoint>
+        <omgdi:waypoint x="544.0" y="457.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="72.0" x="430.0" y="419.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="CloseAction" id="BPMNEdge_CloseAction">
+        <omgdi:waypoint x="410.0" y="399.0"></omgdi:waypoint>
+        <omgdi:waypoint x="596.0" y="364.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="59.0" x="410.0" y="399.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="DoneAction" id="BPMNEdge_DoneAction">
+        <omgdi:waypoint x="430.0" y="193.0"></omgdi:waypoint>
+        <omgdi:waypoint x="579.0" y="233.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="57.0" x="470.0" y="199.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow19" id="BPMNEdge_flow19">
+        <omgdi:waypoint x="703.0" y="278.0"></omgdi:waypoint>
+        <omgdi:waypoint x="802.0" y="309.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow20" id="BPMNEdge_flow20">
+        <omgdi:waypoint x="632.0" y="260.0"></omgdi:waypoint>
+        <omgdi:waypoint x="683.0" y="258.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="RefinementAction" id="BPMNEdge_RefinementAction">
+        <omgdi:waypoint x="430.0" y="153.0"></omgdi:waypoint>
+        <omgdi:waypoint x="602.0" y="115.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="87.0" x="410.0" y="93.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow22" id="BPMNEdge_flow22">
+        <omgdi:waypoint x="602.0" y="115.0"></omgdi:waypoint>
+        <omgdi:waypoint x="823.0" y="142.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="DelegateAction" id="BPMNEdge_DelegateAction">
+        <omgdi:waypoint x="450.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="771.0" y="173.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="75.0" x="569.0" y="157.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow23" id="BPMNEdge_flow23">
+        <omgdi:waypoint x="876.0" y="173.0"></omgdi:waypoint>
+        <omgdi:waypoint x="920.0" y="163.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow24" id="BPMNEdge_flow24">
+        <omgdi:waypoint x="855.0" y="336.0"></omgdi:waypoint>
+        <omgdi:waypoint x="910.0" y="336.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="CreatedState" id="BPMNEdge_CreatedState">
+        <omgdi:waypoint x="230.0" y="346.0"></omgdi:waypoint>
+        <omgdi:waypoint x="229.0" y="537.0"></omgdi:waypoint>
+        <omgdi:waypoint x="260.0" y="547.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="65.0" x="231.0" y="471.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow25" id="BPMNEdge_flow25">
+        <omgdi:waypoint x="365.0" y="547.0"></omgdi:waypoint>
+        <omgdi:waypoint x="400.0" y="547.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="CreateAction" id="BPMNEdge_CreateAction">
+        <omgdi:waypoint x="440.0" y="547.0"></omgdi:waypoint>
+        <omgdi:waypoint x="528.0" y="547.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="13.0" width="64.0" x="459.0" y="534.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow26" id="BPMNEdge_flow26">
+        <omgdi:waypoint x="633.0" y="547.0"></omgdi:waypoint>
+        <omgdi:waypoint x="771.0" y="547.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow27" id="BPMNEdge_flow27">
+        <omgdi:waypoint x="791.0" y="527.0"></omgdi:waypoint>
+        <omgdi:waypoint x="842.0" y="488.0"></omgdi:waypoint>
+        <omgdi:waypoint x="802.0" y="364.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow28" id="BPMNEdge_flow28">
+        <omgdi:waypoint x="811.0" y="547.0"></omgdi:waypoint>
+        <omgdi:waypoint x="892.0" y="547.0"></omgdi:waypoint>
+        <omgdi:waypoint x="990.0" y="331.0"></omgdi:waypoint>
+        <omgdi:waypoint x="823.0" y="205.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow29" id="BPMNEdge_flow29">
+        <omgdi:waypoint x="1025.0" y="163.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1050.0" y="167.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="ChangeDescriptionAction" id="BPMNEdge_ChangeDescriptionAction">
+        <omgdi:waypoint x="430.0" y="153.0"></omgdi:waypoint>
+        <omgdi:waypoint x="400.0" y="94.0"></omgdi:waypoint>
+        <omgdi:waypoint x="430.0" y="33.0"></omgdi:waypoint>
+        <omgdi:waypoint x="760.0" y="50.0"></omgdi:waypoint>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds height="39.0" width="100.0" x="339.0" y="15.0"></omgdc:Bounds>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="flow30" id="BPMNEdge_flow30">
+        <omgdi:waypoint x="891.0" y="50.0"></omgdi:waypoint>
+        <omgdi:waypoint x="1008.0" y="50.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>

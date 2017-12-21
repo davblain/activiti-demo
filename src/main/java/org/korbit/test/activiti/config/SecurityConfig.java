@@ -1,7 +1,8 @@
-package org.korbit.test.activiti.security;
+package org.korbit.test.activiti.config;
 
 import org.activiti.engine.IdentityService;
 import org.activiti.spring.security.IdentityServiceUserDetailsService;
+import org.korbit.test.activiti.security.AuthenticationTokenFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +38,7 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter{
         http.csrf().disable()
                 .authorizeRequests()
                 .antMatchers(SIGN_IN_URL+"/**").permitAll()
+                .antMatchers("/api/ws").permitAll()
                 .anyRequest()
                 .authenticated()
                 .and().sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -53,4 +55,5 @@ public class SecurityConfig  extends WebSecurityConfigurerAdapter{
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+
 }

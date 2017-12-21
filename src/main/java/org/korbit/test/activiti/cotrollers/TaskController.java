@@ -5,6 +5,7 @@ import org.korbit.test.activiti.dto.TaskDto;
 import org.korbit.test.activiti.dto.TaskMailRequest;
 import org.korbit.test.activiti.models.Action;
 import org.korbit.test.activiti.models.ActionType;
+import org.korbit.test.activiti.services.ActionService;
 import org.korbit.test.activiti.services.TMailProcessService;
 import org.korbit.test.activiti.services.TasksService;
 import org.springframework.web.bind.annotation.*;
@@ -19,23 +20,25 @@ import java.util.stream.Collectors;
 public class TaskController {
     final private TMailProcessService tMailProcessService;
     final  private  TasksService tasksService;
-    TaskController(TMailProcessService tMailProcessService, TasksService tasksService) {
+    final private ActionService actionService;
+    TaskController(TMailProcessService tMailProcessService, TasksService tasksService, ActionService actionService) {
         this.tasksService = tasksService;
         this.tMailProcessService = tMailProcessService;
+        this.actionService = actionService;
     }
     @PostMapping("tasks")
     String  startTaskProcess(@RequestBody @Valid TaskMailRequest task, Principal principal) {
         task.setCreator(principal.getName());
         return tasksService.startTask(task);
     }
-    @PutMapping("tasks/{taskId}")
-    String changeDescription(Principal principal,@PathVariable String taskId,@RequestBody String description){
-        if (tMailProcessService.getNonAssignNeedActionTypes(taskId,principal.getName()).contains(ActionType.ChangeDescription)){
-            tasksService.changeDescriptionOfTask(taskId,description);
-            return "SUCCESS";
-        }
-        return "ERR";
-    }
+    //@PutMapping("tasks/{taskId}")
+    //String changeDescription(Principal principal,@PathVariable String taskId,@RequestBody String description){
+      //  if (tMailProcessService.getNonAssignNeedActionTypes(taskId,principal.getName()).contains(ActionType.ChangeDescriptionAction)){
+        //    tasksService.changeDescriptionOfTask(taskId,description);
+          //  return "SUCCESS";
+       // }
+       // return "ERR";
+    //}
     @PostMapping("tasks/{taskId}/dostep")
     void doStep(@RequestBody @Valid ActionDto actionDto, @PathVariable String taskId, Principal principal) {
         actionDto.setCreator(principal.getName());
@@ -47,13 +50,7 @@ public class TaskController {
     }
     @GetMapping("tasks/{taskId}/available_actions")
     List<Action> getAvailableActions(@PathVariable String taskId, Principal principal) {
-        return tMailProcessService.getAvailableActionTypes(taskId,principal.getName()).stream()
-                .map(Action::createActionByActionType).collect(Collectors.toList());
-    }
-    @GetMapping("task/{taskId}/non_assign_need_available_actions")
-    List<Action> getNonStepAvailableActions(@PathVariable String taskId,Principal principal) {
-        return tMailProcessService.getNonAssignNeedActionTypes(taskId,principal.getName()).stream()
-                .map((Action::createActionByActionType)).collect(Collectors.toList());
+        return tMailProcessService.getAvailableActionsOfUser(taskId,principal.getName());
     }
     @GetMapping("tasks/{taskId}")
     TaskDto getTaskDetails(@PathVariable String taskId) {

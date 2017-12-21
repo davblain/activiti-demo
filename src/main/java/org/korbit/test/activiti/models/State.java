@@ -17,15 +17,18 @@ public class State  implements Serializable{
     }
     static public State instanceState(StateType state){
         State statee = new  State(state);
-        if (state.equals(StateType.Created)) {
-            statee.setUnavailableActions(Arrays.asList(ActionType.ReOpen));
-        } else if (state.equals(StateType.Closed)) {
-            statee.setUnavailableActions(Arrays.asList(ActionType.Refinement, ActionType.Delegate, ActionType.Close));
-        } else if (state.equals(StateType.Done)) {
-                statee.setUnavailableActions(Arrays.asList(ActionType.Delegate,ActionType.Cancel,ActionType.Done,ActionType.Close,ActionType.Refinement,ActionType.ChangeDescription));
+        if (state.equals(StateType.CreatedState)) {
+            statee.setUnavailableActions(Arrays.asList(ActionType.ReOpenAction,ActionType.CloseAction));
+
+        } else if (state.equals(StateType.ClosedState)) {
+
+            statee.setUnavailableActions(Arrays.asList(ActionType.RefinementAction, ActionType.DelegateAction, ActionType.CloseAction,ActionType.DoneAction,ActionType.ReOpenAction,ActionType.ChangeDescriptionAction,ActionType.CancelAction));
+
+        } else if (state.equals(StateType.DoneState)) {
+                statee.setUnavailableActions(Arrays.asList(ActionType.DelegateAction,ActionType.CancelAction,ActionType.DoneAction,ActionType.RefinementAction,ActionType.ChangeDescriptionAction));
         }
          else
-            statee.setUnavailableActions(Arrays.asList(ActionType.ReOpen, ActionType.Delegate,ActionType.Cancel,ActionType.Done,ActionType.Close,ActionType.Refinement,ActionType.ChangeDescription));
+            statee.setUnavailableActions(Arrays.asList(ActionType.ReOpenAction, ActionType.DelegateAction,ActionType.CancelAction,ActionType.DoneAction,ActionType.CloseAction,ActionType.RefinementAction,ActionType.ChangeDescriptionAction));
 
         return statee;
     }

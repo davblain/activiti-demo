@@ -9,12 +9,13 @@ import java.io.Serializable;
 
 @JsonFormat(shape = JsonFormat.Shape.STRING)
 public enum ActionType implements Serializable{
-    Delegate,
-    Refinement,
-    Done,
-    Close,
-    ReOpen,
-    Cancel,
-    Create,
-    ChangeDescription
+    DelegateAction,
+    RefinementAction,
+    DoneAction,
+    CloseAction,
+    ReOpenAction,
+    CreateAction,
+    ChangeDescriptionAction,
+    CancelAction,
+    ExpireAction
 }

@@ -26,6 +26,7 @@ public class UserService {
          return us;
      }).collect(Collectors.toList());
     }
+    @Deprecated
     public List<GroupPermission> getGroupPermissionsOfUser(String username) {
             List<Group> groups = identityService.createGroupQuery().groupMember(username).list();
             return groups.stream()

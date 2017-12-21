@@ -4,7 +4,8 @@
              xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              xmlns:activiti="http://activiti.org/bpmn">
-    <process id="tMailProcess" name="tMailProcess">
+
+    <process id="tMailProcess" name="tMailProcess" >
         <startEvent id="theStart" activiti:initiator="initiator">
         </startEvent>
         <boundaryEvent id="boundarytimer" attachedToRef="userTask" cancelActivity="true">
@@ -12,7 +13,7 @@
                 <timeDuration>${duration}</timeDuration>
             </timerEventDefinition>
         </boundaryEvent>
-        <sequenceFlow sourceRef="theStart" targetRef="userTask"/>
+        <sequenceFlow sourceRef="theStart" targetRef="callSubProcess"/>
         <userTask id="userTask" activiti:assignee="${assigner}">
             <extensionElements>
                 <activiti:taskListener event="create" class="org.korbit.test.activiti.listeners.CreateListener"/>
@@ -26,40 +27,70 @@
         </userTask>
         <sequenceFlow sourceRef="boundarytimer" targetRef="expiredService"/>
         <sequenceFlow sourceRef="userTask" targetRef="validateService"/>
-        <sequenceFlow sourceRef="validateService" targetRef="actionGw"/>
-        <exclusiveGateway id="actionGw" name="Gateway for action by Performers"/>
-        <sequenceFlow sourceRef="actionGw" targetRef="delegateService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "Delegate"}</conditionExpression>
+        <sequenceFlow sourceRef="userTask2" targetRef="validateService"/>
+        <sequenceFlow sourceRef="validateService" targetRef="callSubProcess"/>
+        <callActivity id="callSubProcess" calledElement="myProcess">
+            <extensionElements>
+                <activiti:in sourceExpression="${state}" target="state"/>
+                <activiti:in sourceExpression="${action}" target="action"/>
+                <activiti:in sourceExpression="${userChain}" target="userChain"/>
+                <activiti:in sourceExpression="${assigner}" target="assigner"/>
+                <activiti:in source="initiator" target="initiator"/>
+                <activiti:out source="timerOn" target="timerOn"/>
+                <activiti:out source="userChain" target="userChain"/>
+                <activiti:out source="assigner" target = "assigner"/>
+                <activiti:out source="action" target="action"/>
+                <activiti:out source="state" target="state"/>
+                <activiti:out source="description" target = "description"/>
+                <activiti:executionListener event="end" delegateExpression="${addHistoryListener}"/>
+            </extensionElements>
+
+        </callActivity>
+        <sequenceFlow sourceRef="callSubProcess" targetRef="timerOnGw"/>
+
+        <exclusiveGateway id ="timerOnGw"/>
+        <sequenceFlow sourceRef="timerOnGw" targetRef="userTask">
+            <conditionExpression xsi:type="tFormalExpression">${timerOn == "true"}</conditionExpression>
         </sequenceFlow>
-        <sequenceFlow sourceRef="actionGw" targetRef="refinementService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "Refinement"} </conditionExpression>
+        <sequenceFlow sourceRef="timerOnGw" targetRef="userTask2">
+            <conditionExpression xsi:type="tFormalExpression">${timerOn == "false"}</conditionExpression>
         </sequenceFlow>
-        <sequenceFlow sourceRef="actionGw" targetRef="closeService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "Close"}</conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow sourceRef="actionGw" targetRef="reopenService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "ReOpen"}</conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow sourceRef="actionGw" targetRef="doneService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "Done"}</conditionExpression>
-        </sequenceFlow>
-        <sequenceFlow sourceRef="actionGw" targetRef="cancelService">
-            <conditionExpression xsi:type="tFormalExpression">${action == "Cancel"}</conditionExpression>
-        </sequenceFlow>
-        <serviceTask id="validateService" activiti:delegateExpression="${validateActionServiceTask}"/>
-        <serviceTask id="reopenService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ReOpenServiceTask"/>
-        <serviceTask id="closeService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CloseServiceTask"/>
-        <serviceTask id="expiredService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ExpiredServiceTask"/>
-        <serviceTask id="doneService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DoneServiceTask"/>
+        <serviceTask id="validateService" activiti:delegateExpression="${validateActionServiceTask}">
+        </serviceTask>
+        <serviceTask id="reopenService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ReOpenServiceTask">
+        </serviceTask>
+        <serviceTask id="closeService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CloseServiceTask">
+        </serviceTask>
+        <serviceTask id="expiredService" activiti:class="org.korbit.test.activiti.tasks.tprocess.ExpiredServiceTask">
+            <extensionElements>
+                <activiti:executionListener event="end"  delegateExpression="${addHistoryListener}">
+                </activiti:executionListener>
+            </extensionElements>
+        </serviceTask>
+        <serviceTask id="doneService" activiti:class="org.korbit.test.activiti.tasks.tprocess.DoneServiceTask">
+            <extensionElements>
+                <activiti:executionListener event="end" delegateExpression= "${delegateListener}">
+                </activiti:executionListener>
+            </extensionElements>
+        </serviceTask>
         <serviceTask id="delegateService" activiti:delegateExpression="${delegateServiceTask}">
+            <extensionElements>
+                <activiti:executionListener event="end" delegateExpression= "${delegateListener}">
+                </activiti:executionListener>
+            </extensionElements>
         </serviceTask>
         <serviceTask id="cancelService" activiti:class="org.korbit.test.activiti.tasks.tprocess.CancelServiceTask"/>
-        <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask"/>
+        <serviceTask id="refinementService" activiti:class="org.korbit.test.activiti.tasks.tprocess.RefinementServiceTask">
+            <extensionElements>
+                <activiti:executionListener event="end" delegateExpression= "${delegateListener}">
+                </activiti:executionListener>
+            </extensionElements>
+        </serviceTask>
         <sequenceFlow sourceRef="userTask2" targetRef="validateService"/>
         <sequenceFlow sourceRef="reopenService" targetRef="userTask"/>
         <sequenceFlow sourceRef="doneService" targetRef="userTask2"/>
         <sequenceFlow sourceRef="delegateService" targetRef="userTask"/>
-        <sequenceFlow sourceRef="cancelService" targetRef="userTask2"/>
+        <sequenceFlow sourceRef="cancelService" targetRef="userTask"/>
         <sequenceFlow sourceRef="expiredService" targetRef="theEnd"/>
         <sequenceFlow sourceRef="closeService" targetRef="userTask2"/>
         <sequenceFlow sourceRef="refinementService" targetRef="userTask"/>

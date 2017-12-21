@@ -1,9 +1,9 @@
 package org.korbit.test.activiti.services;
 
-import org.activiti.engine.HistoryService;
-import org.activiti.engine.IdentityService;
-import org.activiti.engine.RuntimeService;
-import org.activiti.engine.TaskService;
+import org.activiti.bpmn.model.BpmnModel;
+import org.activiti.bpmn.model.ExclusiveGateway;
+import org.activiti.engine.*;
+import org.activiti.engine.delegate.ExecutionListener;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.identity.User;
 import org.activiti.engine.runtime.ProcessInstance;
@@ -13,6 +13,7 @@ import org.korbit.test.activiti.dto.TaskDto;
 import org.korbit.test.activiti.dto.TaskMailRequest;
 import org.korbit.test.activiti.exceptions.TaskNotFoundException;
 import org.korbit.test.activiti.exceptions.UserNotFoundException;
+import org.korbit.test.activiti.models.Action;
 import org.korbit.test.activiti.models.ActionType;
 import org.korbit.test.activiti.models.State;
 import org.korbit.test.activiti.models.StateType;
@@ -31,11 +32,15 @@ public class TasksService {
     final private IdentityService identityService;
     final  private TaskService taskService;
     final private RuntimeService runtimeService;
-    public TasksService(TaskService taskService, HistoryService historyService, RuntimeService runtimeService,IdentityService identityService) {
+    final private ActionService actionService;
+    public TasksService(TaskService taskService, HistoryService historyService, RuntimeService runtimeService,
+                        IdentityService identityService,
+                        ActionService actionService) {
         this.historyService = historyService;
         this.taskService = taskService;
         this.runtimeService = runtimeService;
         this.identityService = identityService;
+        this.actionService = actionService;
     }
 
     @Transactional
@@ -46,19 +51,12 @@ public class TasksService {
             User recipient = Optional.ofNullable(identityService.createUserQuery().userId(task.getRecipient()).singleResult())
                     .orElseThrow(() -> new UserNotFoundException(task.getRecipient()));
             variables.put("assigner",recipient.getId());
-            ArrayList<ActionDto> actionDtos = new ArrayList<>();
             ActionDto action =  new ActionDto();
             action.setCreator(task.getCreator());
-            action.setType(ActionType.Create);
-            action.setData(new HashMap<>());
-
-            action.getData().put("recipient",task.getRecipient());
-            actionDtos.add(action);
-            ArrayList<String> userChain = new ArrayList<String>();
-            userChain.add(task.getRecipient());
-            variables.put("userChain",userChain);
-            variables.put("actions",actionDtos);
-            variables.put("state",  "Created");
+            action.setType(ActionType.CreateAction);
+            variables.put("action",action);
+            variables.put("state",  "CreatedState");
+            variables.put("userChain",new ArrayList<String>());
             variables.put("duration",task.getDuration());
             variables.put("description", task.getDescription());
             variables.put("title",task.getTitle());
@@ -76,9 +74,9 @@ public class TasksService {
         taskVariables.put("actionToValidate",actionDto);
         taskService.complete(task.getId(),taskVariables);
     }
+
     public TaskDto getTaskDetails(@NotNull String taskId) {
-        HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).includeProcessVariables().singleResult())
-                .orElseThrow(() -> new TaskNotFoundException(taskId));
+        HistoricProcessInstance historicProcessInstance = getHistoryInstanceOfTask(taskId);
         TaskDto taskDto = new TaskDto();
         taskDto.setUserChain((List<String>) Optional.ofNullable(historicProcessInstance.getProcessVariables().get("userChain")).orElse(new ArrayList<>()));
         taskDto.setAssignee((String)historicProcessInstance .getProcessVariables().get("assigner"));
@@ -92,12 +90,14 @@ public class TasksService {
         taskDto.setDescription((String) historicProcessInstance.getProcessVariables().get("description"));
         return taskDto;
     }
+
     @Transactional
     public void  changeDescriptionOfTask(String taskId,  String desc) {
         Task task = Optional.ofNullable(taskService.createTaskQuery().processInstanceId(taskId).singleResult())
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
         runtimeService.setVariable(task.getExecutionId(),"description",desc);
     }
+
     public List<String> getListOfAssigners(@NotNull String taskId) {
         Task task = Optional.ofNullable(taskService.createTaskQuery().processInstanceId(taskId).includeProcessVariables().singleResult())
                 .orElseThrow(() -> new TaskNotFoundException(taskId));
@@ -108,19 +108,18 @@ public class TasksService {
                         .collect(Collectors.toList()))
                 .orElse(new ArrayList<String>());
     }
-    public List<ActionType> getUnAvailableActionsOfTask(@NotNull String taskID) {
-        HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery()
-                .processInstanceId(taskID).includeProcessVariables().singleResult())
-                .orElseThrow(() -> new TaskNotFoundException(taskID));
-        ArrayList<ActionType> act = new ArrayList<>();
 
-        if (((ArrayList<String>)(historicProcessInstance.getProcessVariables().get("userChain"))).size()==1) {
-            act.add(ActionType.Refinement);
-        }
-        State state = State.instanceState(StateType.valueOf(historicProcessInstance.getProcessVariables().get("state").toString()));
-        act.addAll(Optional.ofNullable(state.getUnavailableActions()).orElse(new ArrayList<>()));
-        return act;
+    public List<String> getAvailableActionTypesOfTask(@NotNull String taskId) {
+        HistoricProcessInstance historicProcessInstance = getHistoryInstanceOfTask(taskId);
+        String state = historicProcessInstance.getProcessVariables().get("state").toString();
+        return  actionService.getAvailableActionTypesOfState(state);
     }
+
+    public List <Action> getAvailableActionsOfTask(@NotNull String taskId) {
+
+        return actionService.actionTypesToActions(getAvailableActionTypesOfTask(taskId));
+    }
+
     @Transactional
     public List<ActionDto> getListOfActions(@NotNull String taskId) {
         HistoricProcessInstance historicProcessInstance = Optional.ofNullable(historyService.createHistoricProcessInstanceQuery()
@@ -129,5 +128,10 @@ public class TasksService {
 
         return Optional.ofNullable((ArrayList<ActionDto>) historicProcessInstance.getProcessVariables().get("actions")).orElse(new ArrayList<>());
 
+    }
+
+    public  HistoricProcessInstance getHistoryInstanceOfTask(String taskId) {
+        return Optional.ofNullable(historyService.createHistoricProcessInstanceQuery().processInstanceId(taskId).processDefinitionKey("tMailProcess").includeProcessVariables().singleResult())
+                .orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 }

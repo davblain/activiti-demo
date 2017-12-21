@@ -10,13 +10,14 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 @Getter
 @Setter
 public class ActionDto implements Serializable {
     String creator;
     Date time = new Date();
-    Map<String,String> data;
+    Map<String,String> data = new HashMap<>();
     @NotNull
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     ActionType type;

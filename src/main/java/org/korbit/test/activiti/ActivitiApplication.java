@@ -12,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import java.util.Arrays;
 
@@ -23,6 +26,13 @@ public class ActivitiApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(ActivitiApplication.class, args);
+	}
+	@Primary
+	@Bean
+	public TaskExecutor primaryTaskExecutor() {
+		ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+		// add necessary properties to the executor
+		return executor;
 	}
 	@Bean
 	InitializingBean usersAndGroupsInitializer(final IdentityService identityService) {
@@ -42,10 +52,10 @@ public class ActivitiApplication {
 				identityService.saveGroup(group2);
 
 				GroupPermission groupPermission = new GroupPermission();
-				groupPermission.setActionTypesIfAssigner(Arrays.asList(ActionType.Close,ActionType.Cancel,ActionType.Done,
-						ActionType.Delegate,ActionType.ReOpen,ActionType.Refinement));
-				groupPermission.setActionTypesIfNotAssigner(Arrays.asList(ActionType.ChangeDescription));
-				groupPermission.setActionTypesIfCreator(Arrays.asList(ActionType.Done));
+				groupPermission.setActionTypesIfAssigner(Arrays.asList(ActionType.CloseAction,ActionType.CancelAction,ActionType.DoneAction,
+						ActionType.DelegateAction,ActionType.ReOpenAction,ActionType.RefinementAction));
+				groupPermission.setActionTypesIfNotAssigner(Arrays.asList(ActionType.ChangeDescriptionAction));
+				groupPermission.setActionTypesIfCreator(Arrays.asList(ActionType.DoneAction));
 				groupPermission.setGroupId(identityService.createGroupQuery().groupName("ROLE_USER").singleResult().getId());
 				groupPermissionRepository.save(groupPermission);
 				User user = identityService.newUser("davblain");
