@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 @Getter
 @Setter
-public class ActionDto implements Serializable {
+public class ActionHistoryDto implements Serializable {
     String creator;
     Date time = new Date();
     Map<String,String> data = new HashMap<>();

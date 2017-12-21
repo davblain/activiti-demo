@@ -11,7 +11,7 @@ public class TaskDto {
     String creator;
     Date startTime;
     Date endTime;
-    List<ActionDto> actions;
+    List<ActionHistoryDto> actions;
     List<String> userChain;
     String title;
     String description;

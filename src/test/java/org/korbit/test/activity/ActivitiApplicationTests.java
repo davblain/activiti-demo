@@ -41,11 +41,11 @@ public class ActivitiApplicationTests {
 
 	@Test
 	public void getAuthorities() {
-		System.out.println(actionService.getAuthorities("DelegateAction"));
+		System.out.println(actionService.getAuthoritiesOfActionFlow("DelegateAction","OpenedState"));
 	}
 	@Test
-	public void getAvailableActionTypesOfUser() {
-
+	public void isStepAction() {
+		assertThat( actionService.isStepAction("ChangeDescriptionAction")).isFalse();
 	}
 
 }

@@ -120,8 +120,7 @@ execution.setVariable("action",action);</script>
     </scriptTask>
     <sequenceFlow id="ChangeDescriptionAction" name="ChangeDescriptionAction" sourceRef="OpenedStateActions" targetRef="ChangeDescriptionTask">
       <documentation textFormat="text/plain">
-        assigner,
-        isNotStep
+        involved
       </documentation>
       <conditionExpression xsi:type="tFormalExpression"><![CDATA[${action == "ChangeDescriptionAction"}]]></conditionExpression>
     </sequenceFlow>

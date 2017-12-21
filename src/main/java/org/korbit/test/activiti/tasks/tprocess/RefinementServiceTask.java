@@ -2,10 +2,8 @@ package org.korbit.test.activiti.tasks.tprocess;
 
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.JavaDelegate;
-import org.korbit.test.activiti.dto.ActionDto;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 public class    RefinementServiceTask implements JavaDelegate {

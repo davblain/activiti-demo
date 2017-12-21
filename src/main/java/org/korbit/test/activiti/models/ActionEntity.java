@@ -9,9 +9,8 @@ import java.util.List;
 @Getter
 @Setter
 public class ActionEntity {
-    String actionType;
-    boolean isStep = true;
+    Action action;
+    String state;
     List<String> authority = new ArrayList<>();
-    List<FormProperty> properties = new ArrayList<>();
 
 }

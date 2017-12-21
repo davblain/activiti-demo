@@ -12,8 +12,8 @@ public class StepRequest {
     @NotNull
     String taskId;
     @NotNull
-    ActionDto action;
-    public StepRequest(String taskId,ActionDto actionDto) {
+    ActionHistoryDto action;
+    public StepRequest(String taskId,ActionHistoryDto actionDto) {
         this.taskId = taskId;
         this.action = actionDto;
     }

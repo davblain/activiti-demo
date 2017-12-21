@@ -5,7 +5,6 @@ import org.activiti.engine.*;
 import org.activiti.engine.history.HistoricProcessInstance;
 import org.activiti.engine.history.HistoricProcessInstanceQuery;
 import org.korbit.test.activiti.dto.*;
-import org.korbit.test.activiti.exceptions.TaskNotFoundException;
 import org.korbit.test.activiti.models.Action;
 import org.korbit.test.activiti.models.ActionType;
 
@@ -33,8 +32,8 @@ public class TMailProcessService {
     }
 
 
-    private ActionDto getLastDelegateToUser(@NotNull String taskId,@NotNull String username) {
-       List<ActionDto> actionsList = tasksService.getListOfActions(taskId).stream()
+    private ActionHistoryDto getLastDelegateToUser(@NotNull String taskId, @NotNull String username) {
+       List<ActionHistoryDto> actionsList = tasksService.getListOfActions(taskId).stream()
                .filter(actionDto -> actionDto.getType().equals(ActionType.DelegateAction)
                || actionDto.getType().equals(ActionType.RefinementAction)
                ||actionDto.getType().equals(ActionType.CreateAction))
@@ -80,7 +79,7 @@ public class TMailProcessService {
         List<String> allAvailableActionTypes = tasksService.getAvailableActionTypesOfTask(taskId);
         List<String> authoritiesOfUser = userAuthoritesToTask(taskId, username);
         return allAvailableActionTypes.stream().filter(actionType -> {
-            List<String> authoritiesOfAction = actionService.getAuthorities(actionType);
+            List<String> authoritiesOfAction = actionService.getAuthoritiesOfActionFlow(actionType,tasksService.getState(taskId));
             return authoritiesOfAction.stream().anyMatch(authoritiesOfUser::contains);
         }).collect(Collectors.toList());
     }

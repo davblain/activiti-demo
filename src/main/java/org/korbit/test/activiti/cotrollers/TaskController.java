@@ -1,6 +1,6 @@
 package org.korbit.test.activiti.cotrollers;
 
-import org.korbit.test.activiti.dto.ActionDto;
+import org.korbit.test.activiti.dto.ActionHistoryDto;
 import org.korbit.test.activiti.dto.TaskDto;
 import org.korbit.test.activiti.dto.TaskMailRequest;
 import org.korbit.test.activiti.models.Action;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import java.security.Principal;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("api")
@@ -31,21 +30,23 @@ public class TaskController {
         task.setCreator(principal.getName());
         return tasksService.startTask(task);
     }
-    //@PutMapping("tasks/{taskId}")
-    //String changeDescription(Principal principal,@PathVariable String taskId,@RequestBody String description){
-      //  if (tMailProcessService.getNonAssignNeedActionTypes(taskId,principal.getName()).contains(ActionType.ChangeDescriptionAction)){
-        //    tasksService.changeDescriptionOfTask(taskId,description);
-          //  return "SUCCESS";
-       // }
-       // return "ERR";
+    @PutMapping("tasks/{taskId}")
+    String changeDescription(Principal principal,@PathVariable String taskId,@RequestBody String description){
+        ActionHistoryDto actionHistoryDto = new ActionHistoryDto();
+        actionHistoryDto.setCreator(principal.getName());
+        actionHistoryDto.setType(ActionType.ChangeDescriptionAction);
+        actionHistoryDto.getData().put("description",description);
+        tasksService.doAction(taskId,actionHistoryDto);
+        return "success";
+    }
     //}
     @PostMapping("tasks/{taskId}/dostep")
-    void doStep(@RequestBody @Valid ActionDto actionDto, @PathVariable String taskId, Principal principal) {
+    void doStep(@RequestBody @Valid ActionHistoryDto actionDto, @PathVariable String taskId, Principal principal) {
         actionDto.setCreator(principal.getName());
         tasksService.doAction(taskId,actionDto);
     }
     @GetMapping("tasks/{taskId}/action-list")
-    List<ActionDto> getHistoryList(@PathVariable String taskId) {
+    List<ActionHistoryDto> getHistoryList(@PathVariable String taskId) {
         return tasksService.getListOfActions(taskId);
     }
     @GetMapping("tasks/{taskId}/available_actions")

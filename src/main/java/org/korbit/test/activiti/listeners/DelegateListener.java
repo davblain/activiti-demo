@@ -2,9 +2,8 @@ package org.korbit.test.activiti.listeners;
 
 import org.activiti.engine.delegate.DelegateExecution;
 import org.activiti.engine.delegate.ExecutionListener;
-import org.korbit.test.activiti.dto.ActionDto;
+import org.korbit.test.activiti.dto.ActionHistoryDto;
 import org.korbit.test.activiti.dto.DelegateNotification;
-import org.korbit.test.activiti.models.Action;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -19,7 +18,7 @@ public class DelegateListener implements ExecutionListener {
     @Override
     public void notify(DelegateExecution delegateExecution) throws Exception {
 
-        ActionDto action = (ActionDto) delegateExecution.getVariable("action");
+        ActionHistoryDto action = (ActionHistoryDto) delegateExecution.getVariable("action");
 
         List<String> userChain =  Optional.ofNullable((ArrayList<String>)delegateExecution.getVariable("userChain"))
                 .orElse(new ArrayList<>());
